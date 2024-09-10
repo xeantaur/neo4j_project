@@ -1,6 +1,6 @@
 import json
-from neo4j import GraphDatabase
 from pyspark.sql import SparkSession
+from neo4j import GraphDatabase
 from pyspark.sql.functions import trim, col
 
 # Neo4j bağlantı bilgileri
@@ -9,42 +9,12 @@ username = "neo4j"
 password = "12345678"
 driver = GraphDatabase.driver(uri, auth=(username, password))
 
-# JSON dosyasını yükleme
-with open('C:\\Users\\serta\\Desktop\\pcap0.json') as f:
-    json_data = json.load(f)
-
-# Alarm verilerini Neo4j'ye yükleme fonksiyonu
-def load_alarm_data_to_neo4j(data):
-    with driver.session() as session:
-        for entry in data:
-            query = """
-            MERGE (src_ip:IP {address: $src_ip})
-            MERGE (dst_ip:IP {address: $dst_ip})
-            CREATE (src_ip)-[:ALERT {sid: $sid, gid: $gid, rev: $rev, message: $message, priority: $priority, protocol: $protocol, src_port: $src_port, dst_port: $dst_port}]->(dst_ip)
-            """
-            parameters = {
-                'src_ip': entry.get('src_ip'),
-                'dst_ip': entry.get('dst_ip'),
-                'sid': entry.get('sid'),
-                'gid': entry.get('gid'),
-                'rev': entry.get('rev'),
-                'message': entry.get('message'),
-                'priority': entry.get('priority'),
-                'protocol': entry.get('protocol'),
-                'src_port': entry.get('src_port'),
-                'dst_port': entry.get('dst_port')
-            }
-            session.run(query, parameters)
-
-# Alarm verilerini Neo4j'ye yükleme
-load_alarm_data_to_neo4j(json_data)
-
 # PySpark oturumunu oluşturma
 spark = SparkSession.builder \
     .appName("Network Traffic Analysis") \
     .getOrCreate()
 
-# Tshark dosyasını PySpark DataFrame'e yükleme
+# CSV dosyasını PySpark DataFrame'e yükleme
 csv_file_path = 'C:\\Users\\serta\\Desktop\\test.csv'
 df = spark.read.csv(csv_file_path, sep="\t", header=False)
 
@@ -109,11 +79,41 @@ def load_layer3_data_to_neo4j(data):
             }
             session.run(query, parameters)
 
+# JSON dosyasını yükleme
+with open('C:\\Users\\serta\\Desktop\\pcap0.json') as f:
+    json_data = json.load(f)
+
+# Alarm verilerini Neo4j'ye yükleme fonksiyonu
+def load_alarm_data_to_neo4j(data):
+    with driver.session() as session:
+        for entry in data:
+            query = """
+            MERGE (src_ip:IP {address: $src_ip})
+            MERGE (dst_ip:IP {address: $dst_ip})
+            CREATE (src_ip)-[:ALERT {sid: $sid, gid: $gid, rev: $rev, message: $message, priority: $priority, protocol: $protocol, src_port: $src_port, dst_port: $dst_port}]->(dst_ip)
+            """
+            parameters = {
+                'src_ip': entry.get('src_ip'),
+                'dst_ip': entry.get('dst_ip'),
+                'sid': entry.get('sid'),
+                'gid': entry.get('gid'),
+                'rev': entry.get('rev'),
+                'message': entry.get('message'),
+                'priority': entry.get('priority'),
+                'protocol': entry.get('protocol'),
+                'src_port': entry.get('src_port'),
+                'dst_port': entry.get('dst_port')
+            }
+            session.run(query, parameters)
+
 # Layer 2 veriyi Neo4j'ye yükleme
 load_layer2_data_to_neo4j(data_list)
 
 # Layer 3 veriyi Neo4j'ye yükleme
 load_layer3_data_to_neo4j(data_list)
+
+# Alarm verilerini Neo4j'ye yükleme
+load_alarm_data_to_neo4j(json_data)
 
 # Bağlantıyı kapatma
 driver.close()
