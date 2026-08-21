@@ -1,0 +1,38 @@
+[
+  {
+    "src_ip": "192.168.1.10",
+    "dst_ip": "192.168.1.20",
+    "sid": 9000001,
+    "gid": 1,
+    "rev": 1,
+    "message": "TEST-ALERT Synthetic SSH Scan Simulation",
+    "priority": 2,
+    "protocol": "TCP",
+    "src_port": 54321,
+    "dst_port": 22
+  },
+  {
+    "src_ip": "192.168.1.10",
+    "dst_ip": "10.0.0.5",
+    "sid": 9000002,
+    "gid": 1,
+    "rev": 1,
+    "message": "TEST-ALERT Suspicious Outbound Connection",
+    "priority": 1,
+    "protocol": "TCP",
+    "src_port": 49152,
+    "dst_port": 443
+  },
+  {
+    "src_ip": "192.168.1.30",
+    "dst_ip": "192.168.1.10",
+    "sid": 9000003,
+    "gid": 1,
+    "rev": 1,
+    "message": "TEST-ALERT High Volume HTTP Traffic",
+    "priority": 3,
+    "protocol": "HTTP",
+    "src_port": 8080,
+    "dst_port": 80
+  }
+]
