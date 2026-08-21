@@ -1,18 +1,18 @@
 # Network Traffic & Security Alert Analysis with Neo4j
 
-Graph-based network traffic and security alert analysis using Neo4j.
+Graph-based network traffic and security alert analysis using Neo4j and FastAPI.
 
-> **Origin:** This project was originally developed during a cybersecurity internship (September 2024). It is being modernized from an internship prototype into a portfolio-quality cybersecurity analysis tool. The original prototype used PySpark and unindexed row-by-row `CREATE` relationships; the modernized system uses a lightweight pandas ingestion pipeline, a normalized fact-based graph model, and batched `UNWIND` persistence with Neo4j 5.x constraints.
+> **Origin:** This project was originally developed during a cybersecurity internship (September 2024). It is being modernized from an internship prototype into a portfolio-quality cybersecurity analysis tool. The original prototype used PySpark and unindexed row-by-row `CREATE` relationships; the modernized system uses a lightweight pandas ingestion pipeline, a normalized fact-based graph model, batched `UNWIND` persistence with Neo4j 5.x constraints, and a read-only FastAPI REST backend.
 
 ## What It Does
 
-This application processes two types of cybersecurity data and loads them into a Neo4j graph database for relationship analysis:
+This application processes two types of cybersecurity data, loads them into a Neo4j graph database for relationship analysis, and provides a typed REST API:
 
-1. **Network traffic data** (tshark/Wireshark TSV export) — Layer 2 identifiers, IP addresses, and transport protocols
+1. **Network traffic data** (tshark/Wireshark TSV export) — Layer 2 identifiers, IP addresses, and observed protocols
 2. **IDS/Snort alert data** (JSON array) — security alerts with rule IDs, severity ratings, and connection details
 
 The resulting graph models:
-- **Layer 3 communication** — directional IP-to-IP flows with transport protocol properties
+- **Layer 3 communication** — directional IP-to-IP flows with observed protocol properties
 - **Layer 2 communication** — directional interface-to-interface frame flows
 - **Layer 2 / Layer 3 resolution** — observed associations between IP addresses and Layer 2 identifiers
 - **Security alert facts** — discrete, normalized alert facts preserving source-target pairings and rule metadata
@@ -21,22 +21,26 @@ The resulting graph models:
 
 | Technology | Purpose |
 |---|---|
-| Python 3.9+ | Main language (Verified on Python 3.11.9) |
+| Python 3.9+ | Main language (Actively verified on Python 3.11.9) |
+| FastAPI | Modern, typed, asynchronous/multithreaded REST API framework |
+| Uvicorn | High-performance ASGI server |
+| Pydantic v2 | Strict request validation, canonicalization, and response serialization |
 | pandas | Tabular network traffic parsing, cleaning, and deduplication |
 | Neo4j 5.x | Graph database with uniqueness constraints and RANGE indexes |
-| neo4j (Python driver) | Database connectivity with managed retry-safe transactions (`session.execute_write`) |
-| python-dotenv | Environment-based configuration |
-| pytest | Automated test suite (unit tests and opt-in live Neo4j integration tests) |
+| neo4j (Python driver) | Database connectivity with managed retry-safe transactions (`session.execute_read` / `session.execute_write`) |
+| python-dotenv | Environment-based configuration with lazy loading |
+| pytest | Automated test suite (unit tests, API test client, and opt-in live Neo4j integration tests) |
 
 ## Architecture
 
 ```
+[ Ingestion Pipeline — CLI: python -m src.main ]
 Network traffic (TSV)             IDS alerts (JSON)
           │                              │
           ▼                              ▼
 src/ingestion/traffic_parser.py   src/ingestion/alert_parser.py
   - TSV extraction & cleaning       - JSON array parsing
-  - MAC normalization               - Type coercion & semantic validation
+  - MAC normalization               - Type coercion & validation
   - IP validation & deduplication   - Missing fields -> None
           │                              │
           ▼                              ▼
@@ -45,12 +49,7 @@ src/ingestion/traffic_parser.py   src/ingestion/alert_parser.py
           └──────────────┬───────────────┘
                          │
                          ▼
-                    src/main.py
-                         │
-                         ▼
              src/graph/repository.py
-  - IP canonicalization (IPv4/IPv6)
-  - Deterministic fact_key generation (SHA-256)
   - Parameterized UNWIND batching (session.execute_write)
                          │
                          ▼
@@ -63,6 +62,20 @@ src/ingestion/traffic_parser.py   src/ingestion/alert_parser.py
     │  [:OBSERVED_WITH]                       │
     │  [:SOURCE_OF]  [:TARGETS]               │
     └─────────────────────────────────────────┘
+                         ▲
+                         │ session.execute_read
+                         │
+             src/graph/read_repository.py
+                         ▲
+                         │ dependency injection
+                         │
+[ FastAPI Backend API — Server: uvicorn src.api.app:app ]
+src/api/routes/
+  ├── health.py        (GET /health, GET /ready)
+  ├── network.py       (GET /api/v1/network/*)
+  ├── alerts.py        (GET /api/v1/alerts/*)
+  ├── correlations.py  (GET /api/v1/correlations/*)
+  └── graph.py         (GET /api/v1/graph/*)
 ```
 
 ## Neo4j Graph Model
@@ -107,7 +120,7 @@ Layer 2 Frame Topology:
 
 - **`(:IPAddress)-[:COMMUNICATED_TO {protocol}]->(:IPAddress)`**: Directional Layer 3 communication.
 - **`(:Layer2Identifier)-[:L2_COMMUNICATED_TO {protocol}]->(:Layer2Identifier)`**: Directional Layer 2 frame communication.
-- **`(:IPAddress)-[:OBSERVED_WITH]->(:Layer2Identifier)`**: Observed Layer 2 / Layer 3 association in captured traffic (does not assert permanent hardware ownership).
+- **`(:IPAddress)-[:OBSERVED_WITH]->(:Layer2Identifier)`**: Observed Layer 2 / Layer 3 association in captured traffic.
 - **`(:IPAddress)-[:SOURCE_OF]->(:AlertFact)`**: Connects the initiator/source IP to the alert fact.
 - **`(:AlertFact)-[:TARGETS]->(:IPAddress)`**: Connects the alert fact to the destination/target IP.
 
@@ -119,75 +132,48 @@ The `fact_key` on `:AlertFact` is a deterministic SHA-256 hash calculated over t
 > **Data Limitation Note:**
 > The input datasets lack timestamps, packet IDs, flow IDs, and IDS event IDs. Therefore, `fact_key` represents a **unique normalized alert fact**, NOT a discrete event instance. Two identical real-world alerts with the same attributes collapse into a single `:AlertFact` node upon re-ingestion.
 
-## Uniqueness Constraints & Indexes (Neo4j 5.x)
+## REST API (FastAPI)
 
-Applied automatically via `src/graph/schema.py`:
+Phase 4 introduces a read-only REST API exposing graph topology, security alert facts, cross-domain correlations, and graph traversal.
 
-```cypher
-// Uniqueness constraints (backed by Neo4j 5.x RANGE indexes)
-CREATE CONSTRAINT ip_address_unique IF NOT EXISTS
-FOR (ip:IPAddress) REQUIRE ip.address IS UNIQUE;
+### Interactive API Documentation
 
-CREATE CONSTRAINT layer2_identifier_unique IF NOT EXISTS
-FOR (l2:Layer2Identifier) REQUIRE l2.identifier IS UNIQUE;
+When the API server is running, interactive OpenAPI documentation is available at:
+- **Swagger UI:** `http://127.0.0.1:8000/docs`
+- **ReDoc:** `http://127.0.0.1:8000/redoc`
 
-CREATE CONSTRAINT alert_fact_unique IF NOT EXISTS
-FOR (fact:AlertFact) REQUIRE fact.fact_key IS UNIQUE;
+### API Endpoints Reference
 
-// Property indexes for fast filtering
-CREATE INDEX alert_fact_priority_index IF NOT EXISTS
-FOR (fact:AlertFact) ON (fact.priority);
+| Method | Endpoint | Description | Query / Path Parameters |
+|---|---|---|---|
+| `GET` | `/health` | Application liveness (0 database calls) | None |
+| `GET` | `/ready` | Database readiness check | None |
+| `GET` | `/api/v1/network/ips` | Paginated list of observed IP addresses | `limit` (1..200), `offset` |
+| `GET` | `/api/v1/network/ips/{address}` | IP context, L2 associations & flow counts | `address` (path) |
+| `GET` | `/api/v1/network/ips/{address}/peers` | Communicating peers and observed protocols | `address` (path), `direction` (`outbound`, `inbound`, `all`), `limit`, `offset` |
+| `GET` | `/api/v1/network/ips/{address}/layer2` | Paginated Layer 2 associations for an IP | `address` (path), `limit`, `offset` |
+| `GET` | `/api/v1/network/layer2` | Paginated list of Layer 2 identifiers | `limit`, `offset` |
+| `GET` | `/api/v1/network/communications` | Filterable Layer 3 IP-to-IP flows | `source_ip`, `target_ip`, `protocol`, `limit`, `offset` |
+| `GET` | `/api/v1/alerts` | Filterable normalized security alert facts | `source_ip`, `target_ip`, `priority`, `sid`, `protocol`, `limit`, `offset` |
+| `GET` | `/api/v1/alerts/{fact_key}` | Retrieve single alert fact by SHA-256 key | `fact_key` (64-char hex path) |
+| `GET` | `/api/v1/correlations/traffic-alerts` | Communicating IP pairs with matching alerts | `limit`, `offset` |
+| `GET` | `/api/v1/graph/neighborhood/{address}` | Bounded subgraph around an IP | `address` (path), `depth` (1..2), `max_nodes` (1..100) |
+| `GET` | `/api/v1/graph/path` | Shortest Layer 3 path between two IPs | `source`, `target`, `max_hops` (1..10) |
 
-CREATE INDEX alert_fact_sid_index IF NOT EXISTS
-FOR (fact:AlertFact) ON (fact.sid);
+### Pagination Envelope
+
+All collection endpoints return a standardized pagination envelope:
+
+```json
+{
+  "items": [ ... ],
+  "total": 42,
+  "limit": 50,
+  "offset": 0
+}
 ```
 
-## Example Cypher Queries
-
-### 1. Network Topology (Communicating IP Pairs)
-```cypher
-MATCH (src:IPAddress)-[c:COMMUNICATED_TO]->(dst:IPAddress)
-RETURN src.address AS source, dst.address AS destination, c.protocol AS protocol
-ORDER BY source, destination;
-```
-
-### 2. High-Severity Security Alerts with Source and Target
-```cypher
-MATCH (src:IPAddress)-[:SOURCE_OF]->(fact:AlertFact)-[:TARGETS]->(dst:IPAddress)
-WHERE fact.priority <= 2
-RETURN src.address AS attacker, dst.address AS victim, fact.message AS alert_name,
-       fact.priority AS severity, fact.src_port AS src_port, fact.dst_port AS dst_port
-ORDER BY fact.priority ASC;
-```
-
-### 3. Threat Correlation (Endpoints with Traffic AND Security Alerts)
-```cypher
-MATCH (src:IPAddress)-[:SOURCE_OF]->(fact:AlertFact)-[:TARGETS]->(dst:IPAddress)
-MATCH (src)-[c:COMMUNICATED_TO]->(dst)
-RETURN src.address AS source, dst.address AS target, fact.message AS alert, c.protocol AS traffic_protocol;
-```
-
-### 4. Layer 2 to Layer 3 Resolution Mapping
-```cypher
-MATCH (ip:IPAddress)-[:OBSERVED_WITH]->(l2:Layer2Identifier)
-RETURN ip.address AS ip_address, l2.identifier AS layer2_identifier;
-```
-
-## Prerequisites
-
-- **Python 3.9+** (Target compatibility: Python 3.9–3.12; actively verified on Python 3.11.9)
-- **No Java or JVM runtime required** for ingestion
-- **Neo4j 5.x** — [Download Neo4j Desktop](https://neo4j.com/download/) or run via Docker:
-
-```bash
-docker run -d \
-  --name neo4j \
-  -p 7474:7474 -p 7687:7687 \
-  -e NEO4J_AUTH=neo4j/your_password_here \
-  neo4j:5
-```
-
-## Setup
+## Setup & Running
 
 ### 1. Clone and install dependencies
 
@@ -199,7 +185,7 @@ pip install -r requirements.txt
 
 ### 2. Configure environment
 
-Copy the example environment file and fill in your values:
+Copy the example environment file:
 
 ```bash
 cp .env.example .env
@@ -213,13 +199,25 @@ NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=your_actual_password
 TRAFFIC_CSV_PATH=data/samples/sample_traffic.tsv
 ALERTS_JSON_PATH=data/samples/sample_alerts.json
+# Optional: comma-separated origins (CORS disabled if unset)
+# CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
-> **⚠️ Security:** Never commit the `.env` file. It is excluded by `.gitignore`.
+### 3. Run Ingestion CLI
 
-### 3. Run Automated Tests
+```bash
+python -m src.main
+```
 
-Execute the default unit test suite (runs 100% in-memory with zero network calls):
+### 4. Start the FastAPI Backend Server
+
+```bash
+uvicorn src.api.app:app --host 127.0.0.1 --port 8000 --reload
+```
+
+### 5. Run Automated Tests
+
+Execute the test suite (all unit and API tests run 100% in-memory with mocked drivers and zero network calls):
 
 ```bash
 pytest
@@ -239,23 +237,7 @@ $env:NEO4J_TEST_PASSWORD="<your-test-password>"
 python -m pytest tests/test_neo4j_integration.py -v
 ```
 
-> **Important Notes:**
-> - Integration tests require explicit `NEO4J_TEST_*` environment variables and will **never** fall back to production/application credentials.
-> - The live integration suite has **not** yet been executed in the current development environment as no disposable Neo4j instance was available.
-
-### 4. Run Ingestion Application
-
-```bash
-python -m src.main
-```
-
-## Migration Policy
-
-The modernized Phase 3 graph schema is designed to be **rebuilt directly from source datasets** rather than migrated in-place from the legacy `:IP` / `:MAC` / `:DESTINATION` model. No destructive database cleanup is performed automatically.
-
-## Security Notice
-
-Historical commits in this repository contain hardcoded credentials from the original internship prototype. Those credentials should be considered **compromised** and must not be reused in any environment. All configuration is now loaded from environment variables.
+> **Note:** The live integration suite has **not** yet been executed in the current development environment as no disposable Neo4j instance was available.
 
 ## Project Structure
 
@@ -267,26 +249,48 @@ neo4j_project/
 │       └── sample_alerts.json      # Synthetic IDS alert data
 ├── src/
 │   ├── __init__.py
-│   ├── config.py                  # Centralized configuration
+│   ├── config.py                  # Centralized configuration with lazy access
 │   ├── main.py                    # Application CLI orchestrator
-│   ├── ingestion/                 # Ingestion pipeline
-│   │   ├── __init__.py            # Ingestion exports
-│   │   ├── models.py              # TrafficRecord, AlertRecord, IngestionSummary
-│   │   ├── traffic_parser.py      # pandas-based TSV traffic parser
-│   │   └── alert_parser.py        # JSON alert parser
-│   └── graph/                     # Graph persistence & schema
-│       ├── __init__.py            # Graph exports
-│       ├── schema.py              # Constraints and RANGE indexes
-│       └── repository.py          # Neo4jRepository with batched UNWIND writes
+│   ├── api/                       # Phase 4 FastAPI REST Backend
+│   │   ├── __init__.py
+│   │   ├── app.py                 # FastAPI application factory & error handlers
+│   │   ├── dependencies.py        # Lifespan management & dependency injection
+│   │   ├── models.py              # Pydantic v2 response schemas
+│   │   └── routes/
+│   │       ├── __init__.py
+│   │       ├── health.py          # GET /health, GET /ready
+│   │       ├── network.py         # GET /api/v1/network/*
+│   │       ├── alerts.py          # GET /api/v1/alerts/*
+│   │       ├── correlations.py    # GET /api/v1/correlations/*
+│   │       └── graph.py           # GET /api/v1/graph/*
+│   ├── graph/                     # Graph persistence & query repositories
+│   │   ├── __init__.py            # Graph exports
+│   │   ├── schema.py              # Constraints and RANGE indexes
+│   │   ├── repository.py          # Write persistence (batched UNWIND)
+│   │   └── read_repository.py     # Read queries (session.execute_read)
+│   └── ingestion/                 # Ingestion parsers & domain models
+│       ├── __init__.py
+│       ├── models.py              # TrafficRecord, AlertRecord, IngestionSummary
+│       ├── traffic_parser.py      # pandas-based TSV traffic parser
+│       └── alert_parser.py        # JSON alert parser
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py                # Shared pytest fixtures
 │   ├── test_alert_parser.py       # Alert parser test suite
+│   ├── test_api_alerts.py         # Alert API endpoints test suite
+│   ├── test_api_correlations.py   # Correlation API endpoints test suite
+│   ├── test_api_errors.py         # Error handling & CORS test suite
+│   ├── test_api_graph.py          # Graph traversal API test suite
+│   ├── test_api_health.py         # Health & readiness API test suite
+│   ├── test_api_network.py        # Network & IP API test suite
 │   ├── test_config.py             # Config validation tests
-│   ├── test_graph_repository.py   # Repository & fact_key tests
+│   ├── test_config_isolation.py   # Config isolation between API and CLI
+│   ├── test_graph_read_repository.py # Read repository unit tests
+│   ├── test_graph_repository.py   # Write repository & fact_key tests
 │   ├── test_graph_schema.py       # Neo4j schema constraint tests
 │   ├── test_main_ingestion.py     # Main orchestrator unit tests
-│   └── test_neo4j_integration.py  # Opt-in live Neo4j integration tests
+│   ├── test_neo4j_integration.py  # Opt-in live Neo4j integration tests
+│   └── test_traffic_parser.py     # Traffic parser test suite
 ├── .env.example                   # Environment template (safe to commit)
 ├── .gitignore
 ├── pytest.ini
@@ -294,15 +298,13 @@ neo4j_project/
 └── README.md
 ```
 
-> **Note:** The original internship script (`project.py`) was removed from the active branch but is preserved in Git history. To view it: `git show v0-internship:project.py`
-
 ## Roadmap
 
 This project is being modernized through the following planned phases:
 
 ### Current Features
 
-- ✅ Environment-based configuration (`.env` + `python-dotenv`)
+- ✅ Environment-based configuration with lazy loading (`.env` + `python-dotenv`)
 - ✅ Modular pandas-based ingestion of tshark TSV network traffic data
 - ✅ Typed JSON ingestion of IDS/Snort alert data
 - ✅ Normalized domain dataclasses (`TrafficRecord`, `AlertRecord`)
@@ -311,16 +313,18 @@ This project is being modernized through the following planned phases:
 - ✅ Deterministic `fact_key` hashing (SHA-256) for unique normalized alert facts
 - ✅ Uniqueness constraints and RANGE indexes (Neo4j 5.x)
 - ✅ Parameterized `UNWIND` batched writes with managed transactions (`session.execute_write`)
-- ✅ Automated unit test suite with 100% pass rate (`pytest`)
+- ✅ Read-only FastAPI backend API with Pydantic v2 schemas and OpenAPI documentation
+- ✅ Dedicated endpoints for IPs, peers, Layer 2 associations, alert facts, correlations, neighborhood, and shortest path
+- ✅ Automated test suite with 82 passing unit/API tests (`pytest`)
 - ✅ Synthetic sample datasets included
 - ✅ Structured Python logging and deterministic resource cleanup
 
 ### Planned Features
 
-- 🔲 REST API (FastAPI)
-- 🔲 Web dashboard with graph visualization
-- 🔲 Docker Compose deployment
-- 🔲 Advanced security analytics (timeline, scoring, detection)
+- 🔲 Web dashboard with graph visualization (Phase 5)
+- 🔲 Docker Compose deployment (Phase 5)
+- 🔲 Coverage improvements and regression hardening (Phase 6)
+- 🔲 Advanced security analytics (timeline, scoring, detection) (Phase 7)
 
 ### Phases
 
@@ -330,7 +334,7 @@ This project is being modernized through the following planned phases:
 | ~~1~~ | ~~Project foundation~~ (configuration, structure, logging) | — | ✅ Complete |
 | ~~2~~ | ~~Refactor ingestion pipeline~~ (pandas migration, models, tests) | Ingestion/parser unit tests | ✅ Complete |
 | ~~3~~ | ~~Redesign Neo4j graph model & persistence~~ (schema, batching, facts) | Graph schema, repository, integration tests | ✅ Complete |
-| 4 | Add backend API (FastAPI) | API endpoint tests | 🔲 Planned |
+| ~~4~~ | ~~Add backend API~~ (FastAPI read-only REST API) | API route & ReadRepository unit tests | ✅ Complete |
 | 5 | Add web dashboard | Basic frontend/API integration verification | 🔲 Planned |
 | 6 | Final quality pass | Coverage improvements, regression tests, documentation | 🔲 Planned |
 | 7 | Advanced security analytics | Analytics-specific tests | 🔲 Planned |
