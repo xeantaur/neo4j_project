@@ -58,7 +58,20 @@ def test_live_neo4j_schema_and_idempotent_ingestion(live_neo4j_driver):
     # 1. Ensure Schema
     ensure_schema(live_neo4j_driver)
 
-    # 2. Use distinct synthetic test data with unique test-only IP space (TEST-NET-3: 203.0.113.0/24)
+    # 2. Verify Schema Metadata (Constraints and Indexes)
+    with live_neo4j_driver.session() as session:
+        constraints_res = session.run("SHOW CONSTRAINTS").data()
+        constraint_names = {c.get("name") for c in constraints_res}
+        assert "ip_address_unique" in constraint_names
+        assert "layer2_identifier_unique" in constraint_names
+        assert "alert_fact_unique" in constraint_names
+
+        indexes_res = session.run("SHOW INDEXES").data()
+        index_names = {i.get("name") for i in indexes_res}
+        assert "alert_fact_priority_index" in index_names
+        assert "alert_fact_sid_index" in index_names
+
+    # 3. Use distinct synthetic test data (TEST-NET-3: 203.0.113.0/24) with two distinct pairs
     test_traffic = [
         TrafficRecord(
             eth_src_resolved="02:00:00:99:99:01",
@@ -66,7 +79,14 @@ def test_live_neo4j_schema_and_idempotent_ingestion(live_neo4j_driver):
             ip_src="203.0.113.10",
             ip_dst="203.0.113.20",
             protocol="TCP",
-        )
+        ),
+        TrafficRecord(
+            eth_src_resolved="02:00:00:99:99:03",
+            eth_dst_resolved="02:00:00:99:99:04",
+            ip_src="203.0.113.30",
+            ip_dst="203.0.113.40",
+            protocol="UDP",
+        ),
     ]
     test_alerts = [
         AlertRecord(
@@ -75,63 +95,153 @@ def test_live_neo4j_schema_and_idempotent_ingestion(live_neo4j_driver):
             sid=9999001,
             gid=1,
             rev=1,
-            message="SYNTHETIC-INTEGRATION-TEST Alert",
+            message="SYNTHETIC Alert 1",
             priority=1,
             protocol="TCP",
             src_port=44444,
             dst_port=80,
-        )
+        ),
+        AlertRecord(
+            src_ip="203.0.113.30",
+            dst_ip="203.0.113.40",
+            sid=9999002,
+            gid=1,
+            rev=1,
+            message="SYNTHETIC Alert 2",
+            priority=2,
+            protocol="UDP",
+            src_port=55555,
+            dst_port=53,
+        ),
     ]
 
     repo = Neo4jRepository(live_neo4j_driver, batch_size=100)
 
     try:
-        # 3. First Ingestion Run
+        # 4. First Ingestion Run
         repo.write_traffic_records(test_traffic)
         repo.write_alert_records(test_alerts)
 
         with live_neo4j_driver.session() as session:
-            res_ip = session.run(
-                "MATCH (n:IPAddress) WHERE n.address IN ['203.0.113.10', '203.0.113.20'] RETURN count(n) AS c"
+            # Check Nodes
+            c_ip_1 = session.run(
+                "MATCH (n:IPAddress) WHERE n.address IN ['203.0.113.10', '203.0.113.20', '203.0.113.30', '203.0.113.40'] RETURN count(n) AS c"
             ).single()["c"]
-            assert res_ip == 2
+            assert c_ip_1 == 4
 
-            res_fact = session.run(
-                "MATCH (n:AlertFact) WHERE n.sid = 9999001 RETURN count(n) AS c"
+            c_l2_1 = session.run(
+                "MATCH (n:Layer2Identifier) WHERE n.identifier IN ['02:00:00:99:99:01', '02:00:00:99:99:02', '02:00:00:99:99:03', '02:00:00:99:99:04'] RETURN count(n) AS c"
             ).single()["c"]
-            assert res_fact == 1
+            assert c_l2_1 == 4
 
-            # Verify source-of / targets pairing
-            pairing = session.run(
+            c_fact_1 = session.run(
+                "MATCH (n:AlertFact) WHERE n.sid IN [9999001, 9999002] RETURN count(n) AS c"
+            ).single()["c"]
+            assert c_fact_1 == 2
+
+            # Check Relationships
+            c_comm_1 = session.run(
+                "MATCH (src:IPAddress)-[r:COMMUNICATED_TO]->(dst:IPAddress) "
+                "WHERE src.address IN ['203.0.113.10', '203.0.113.30'] RETURN count(r) AS c"
+            ).single()["c"]
+            assert c_comm_1 == 2
+
+            c_l2_comm_1 = session.run(
+                "MATCH (src:Layer2Identifier)-[r:L2_COMMUNICATED_TO]->(dst:Layer2Identifier) "
+                "WHERE src.identifier IN ['02:00:00:99:99:01', '02:00:00:99:99:03'] RETURN count(r) AS c"
+            ).single()["c"]
+            assert c_l2_comm_1 == 2
+
+            c_obs_1 = session.run(
+                "MATCH (ip:IPAddress)-[r:OBSERVED_WITH]->(l2:Layer2Identifier) "
+                "WHERE ip.address IN ['203.0.113.10', '203.0.113.20', '203.0.113.30', '203.0.113.40'] RETURN count(r) AS c"
+            ).single()["c"]
+            assert c_obs_1 == 4
+
+            c_src_of_1 = session.run(
+                "MATCH (src:IPAddress)-[r:SOURCE_OF]->(fact:AlertFact) "
+                "WHERE fact.sid IN [9999001, 9999002] RETURN count(r) AS c"
+            ).single()["c"]
+            assert c_src_of_1 == 2
+
+            c_targets_1 = session.run(
+                "MATCH (fact:AlertFact)-[r:TARGETS]->(dst:IPAddress) "
+                "WHERE fact.sid IN [9999001, 9999002] RETURN count(r) AS c"
+            ).single()["c"]
+            assert c_targets_1 == 2
+
+            # Check Source-Target Pairing Integrity (Pair 1 and Pair 2 exist, cross pairs do NOT)
+            pair1 = session.run(
                 "MATCH (src:IPAddress {address: '203.0.113.10'})-[:SOURCE_OF]->(fact:AlertFact {sid: 9999001})-[:TARGETS]->(dst:IPAddress {address: '203.0.113.20'}) "
                 "RETURN count(fact) AS c"
             ).single()["c"]
-            assert pairing == 1
+            assert pair1 == 1
 
-        # 4. Second Ingestion Run (Verify Idempotency)
+            pair2 = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.30'})-[:SOURCE_OF]->(fact:AlertFact {sid: 9999002})-[:TARGETS]->(dst:IPAddress {address: '203.0.113.40'}) "
+                "RETURN count(fact) AS c"
+            ).single()["c"]
+            assert pair2 == 1
+
+            cross_pair = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.10'})-[:SOURCE_OF]->(fact:AlertFact)-[:TARGETS]->(dst:IPAddress {address: '203.0.113.40'}) "
+                "RETURN count(fact) AS c"
+            ).single()["c"]
+            assert cross_pair == 0
+
+        # 5. Second Ingestion Run (Verify Complete Idempotency)
         repo.write_traffic_records(test_traffic)
         repo.write_alert_records(test_alerts)
 
         with live_neo4j_driver.session() as session:
-            res_ip2 = session.run(
-                "MATCH (n:IPAddress) WHERE n.address IN ['203.0.113.10', '203.0.113.20'] RETURN count(n) AS c"
+            c_ip_2 = session.run(
+                "MATCH (n:IPAddress) WHERE n.address IN ['203.0.113.10', '203.0.113.20', '203.0.113.30', '203.0.113.40'] RETURN count(n) AS c"
             ).single()["c"]
-            assert res_ip2 == 2
+            c_l2_2 = session.run(
+                "MATCH (n:Layer2Identifier) WHERE n.identifier IN ['02:00:00:99:99:01', '02:00:00:99:99:02', '02:00:00:99:99:03', '02:00:00:99:99:04'] RETURN count(n) AS c"
+            ).single()["c"]
+            c_fact_2 = session.run(
+                "MATCH (n:AlertFact) WHERE n.sid IN [9999001, 9999002] RETURN count(n) AS c"
+            ).single()["c"]
+            c_comm_2 = session.run(
+                "MATCH (src:IPAddress)-[r:COMMUNICATED_TO]->(dst:IPAddress) "
+                "WHERE src.address IN ['203.0.113.10', '203.0.113.30'] RETURN count(r) AS c"
+            ).single()["c"]
+            c_l2_comm_2 = session.run(
+                "MATCH (src:Layer2Identifier)-[r:L2_COMMUNICATED_TO]->(dst:Layer2Identifier) "
+                "WHERE src.identifier IN ['02:00:00:99:99:01', '02:00:00:99:99:03'] RETURN count(r) AS c"
+            ).single()["c"]
+            c_obs_2 = session.run(
+                "MATCH (ip:IPAddress)-[r:OBSERVED_WITH]->(l2:Layer2Identifier) "
+                "WHERE ip.address IN ['203.0.113.10', '203.0.113.20', '203.0.113.30', '203.0.113.40'] RETURN count(r) AS c"
+            ).single()["c"]
+            c_src_of_2 = session.run(
+                "MATCH (src:IPAddress)-[r:SOURCE_OF]->(fact:AlertFact) "
+                "WHERE fact.sid IN [9999001, 9999002] RETURN count(r) AS c"
+            ).single()["c"]
+            c_targets_2 = session.run(
+                "MATCH (fact:AlertFact)-[r:TARGETS]->(dst:IPAddress) "
+                "WHERE fact.sid IN [9999001, 9999002] RETURN count(r) AS c"
+            ).single()["c"]
 
-            res_fact2 = session.run(
-                "MATCH (n:AlertFact) WHERE n.sid = 9999001 RETURN count(n) AS c"
-            ).single()["c"]
-            assert res_fact2 == 1
+            assert c_ip_2 == c_ip_1
+            assert c_l2_2 == c_l2_1
+            assert c_fact_2 == c_fact_1
+            assert c_comm_2 == c_comm_1
+            assert c_l2_comm_2 == c_l2_comm_1
+            assert c_obs_2 == c_obs_1
+            assert c_src_of_2 == c_src_of_1
+            assert c_targets_2 == c_targets_1
 
     finally:
-        # Scoped cleanup: delete only the synthetic entities created by this test
+        # Strictly test-scoped cleanup: delete only the exact synthetic entities created by this test
         with live_neo4j_driver.session() as session:
             session.run(
-                "MATCH (fact:AlertFact) WHERE fact.sid = 9999001 DETACH DELETE fact"
-            )
+                "MATCH (fact:AlertFact) WHERE fact.sid IN [9999001, 9999002] DETACH DELETE fact"
+            ).consume()
             session.run(
-                "MATCH (ip:IPAddress) WHERE ip.address IN ['203.0.113.10', '203.0.113.20'] DETACH DELETE ip"
-            )
+                "MATCH (ip:IPAddress) WHERE ip.address IN ['203.0.113.10', '203.0.113.20', '203.0.113.30', '203.0.113.40'] DETACH DELETE ip"
+            ).consume()
             session.run(
-                "MATCH (l2:Layer2Identifier) WHERE l2.identifier IN ['02:00:00:99:99:01', '02:00:00:99:99:02'] DETACH DELETE l2"
-            )
+                "MATCH (l2:Layer2Identifier) WHERE l2.identifier IN ['02:00:00:99:99:01', '02:00:00:99:99:02', '02:00:00:99:99:03', '02:00:00:99:99:04'] DETACH DELETE l2"
+            ).consume()

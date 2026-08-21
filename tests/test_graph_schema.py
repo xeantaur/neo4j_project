@@ -28,14 +28,19 @@ def test_schema_statements_definitions():
 
 
 def test_ensure_schema_execution():
-    """Verify ensure_schema calls session.run for each DDL statement."""
+    """Verify ensure_schema calls session.run and consume() for each DDL statement."""
     mock_session = MagicMock()
     mock_driver = MagicMock()
     mock_driver.session.return_value.__enter__.return_value = mock_session
 
+    mock_result = MagicMock()
+    mock_session.run.return_value = mock_result
+
     ensure_schema(mock_driver)
 
     assert mock_session.run.call_count == len(SCHEMA_STATEMENTS)
+    assert mock_result.consume.call_count == len(SCHEMA_STATEMENTS)
+
     executed_statements = [call.args[0] for call in mock_session.run.call_args_list]
     for stmt in SCHEMA_STATEMENTS:
         assert stmt in executed_statements

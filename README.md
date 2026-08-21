@@ -219,17 +219,29 @@ ALERTS_JSON_PATH=data/samples/sample_alerts.json
 
 ### 3. Run Automated Tests
 
-Execute the full unit test suite:
+Execute the default unit test suite (runs 100% in-memory with zero network calls):
 
 ```bash
 pytest
 ```
 
-To run opt-in live Neo4j integration tests (requires reachable running Neo4j instance):
+#### Opt-In Live Neo4j Integration Testing
 
-```bash
-pytest -m integration
+Live Neo4j integration tests are **strictly opt-in** and require a dedicated, disposable Neo4j test instance. Standard test runs will safely skip live integration testing.
+
+To run against a disposable test instance (PowerShell example):
+
+```powershell
+$env:RUN_NEO4J_INTEGRATION="1"
+$env:NEO4J_TEST_URI="bolt://localhost:17687"
+$env:NEO4J_TEST_USERNAME="neo4j"
+$env:NEO4J_TEST_PASSWORD="<your-test-password>"
+python -m pytest tests/test_neo4j_integration.py -v
 ```
+
+> **Important Notes:**
+> - Integration tests require explicit `NEO4J_TEST_*` environment variables and will **never** fall back to production/application credentials.
+> - The live integration suite has **not** yet been executed in the current development environment as no disposable Neo4j instance was available.
 
 ### 4. Run Ingestion Application
 
@@ -269,11 +281,10 @@ neo4j_project/
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py                # Shared pytest fixtures
-│   ├── test_config.py             # Config validation tests
-│   ├── test_traffic_parser.py     # Traffic parser test suite
 │   ├── test_alert_parser.py       # Alert parser test suite
-│   ├── test_graph_schema.py       # Neo4j schema constraint tests
+│   ├── test_config.py             # Config validation tests
 │   ├── test_graph_repository.py   # Repository & fact_key tests
+│   ├── test_graph_schema.py       # Neo4j schema constraint tests
 │   ├── test_main_ingestion.py     # Main orchestrator unit tests
 │   └── test_neo4j_integration.py  # Opt-in live Neo4j integration tests
 ├── .env.example                   # Environment template (safe to commit)
@@ -297,7 +308,7 @@ This project is being modernized through the following planned phases:
 - ✅ Normalized domain dataclasses (`TrafficRecord`, `AlertRecord`)
 - ✅ Fact-based Neo4j graph model (`:IPAddress`, `:Layer2Identifier`, `:AlertFact`)
 - ✅ Directional relationships (`:COMMUNICATED_TO`, `:L2_COMMUNICATED_TO`, `:OBSERVED_WITH`, `:SOURCE_OF`, `:TARGETS`)
-- ✅ Deterministic `fact_key` hashing (SHA-256) for alert facts
+- ✅ Deterministic `fact_key` hashing (SHA-256) for unique normalized alert facts
 - ✅ Uniqueness constraints and RANGE indexes (Neo4j 5.x)
 - ✅ Parameterized `UNWIND` batched writes with managed transactions (`session.execute_write`)
 - ✅ Automated unit test suite with 100% pass rate (`pytest`)

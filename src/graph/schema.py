@@ -38,11 +38,12 @@ def ensure_schema(driver) -> None:
     """Apply all uniqueness constraints and indexes to the Neo4j database idempotently.
     
     Uses Neo4j 5.x 'IF NOT EXISTS' syntax to ensure safe execution without errors
-    on existing databases.
+    on existing databases. Explicitly consumes transaction results for each statement.
     """
     logger.info("Ensuring Neo4j graph schema constraints and indexes...")
     with driver.session() as session:
         for statement in SCHEMA_STATEMENTS:
             logger.debug("Executing schema statement: %s", statement)
-            session.run(statement)
+            result = session.run(statement)
+            result.consume()
     logger.info("Neo4j graph schema constraints and indexes verified.")
