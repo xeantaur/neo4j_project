@@ -1,0 +1,54 @@
+# Environment and secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# PySpark
+metastore_db/
+derby.log
+spark-warehouse/
+
+# Neo4j local data
+neo4j_data/
+plugins/
+
+# Data files — network captures and alerts may contain sensitive traffic
+# Do NOT commit raw PCAP, large CSV, or production alert data.
+*.pcap
+*.pcapng
+data/*.csv
+data/*.tsv
+data/*.json
+
+# Explicitly allow sample data for demonstration
+!data/samples/
