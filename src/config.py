@@ -38,18 +38,3 @@ ALERTS_JSON_PATH = _require_env("ALERTS_JSON_PATH")
 
 # --- Application constants ---
 APP_NAME = "Network Traffic Analysis"
-CSV_SEPARATOR = "\t"
-CSV_HAS_HEADER = False
-
-# Column names assigned to the raw TSV columns from tshark export.
-# The source data has 7 columns; columns at index 4 and 5 are unused.
-CSV_COLUMN_NAMES = [
-    "eth_src_resolved",
-    "eth_dst_resolved",
-    "ip_src",
-    "ip_dst",
-    "_unused_4",
-    "_unused_5",
-    "protocol",
-]
-CSV_DROP_COLUMNS = ["_unused_4", "_unused_5"]

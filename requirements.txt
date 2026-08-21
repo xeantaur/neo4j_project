@@ -1,12 +1,10 @@
-# Requires Python 3.9–3.11 (PySpark 3.5 constraint)
+# Network Traffic & Security Alert Analysis — Dependencies
+# Requires Python 3.9+
 #
+# Ingestion pipeline uses pandas and standard Python modules (no JVM/Java requirement).
 # Version strategy: bounded dependency versions for compatibility.
-#   - Minimum floor = oldest release expected to work (Sept 2024 baseline)
-#   - Upper cap     = next major version (semver breaking-change boundary)
-#   - These ranges do not guarantee exact reproducibility; they have not
-#     been integration-tested against all possible resolutions.  Pin exact
-#     versions in a lockfile once the environment is validated.
 
-pyspark>=3.5,<4.0
+pandas>=2.0,<3.0
 neo4j>=5.14,<6.0
 python-dotenv>=1.0,<2.0
+pytest>=7.0,<10.0
