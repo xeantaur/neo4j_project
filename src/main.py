@@ -21,11 +21,8 @@ import logging
 from neo4j import GraphDatabase
 
 from src.config import (
-    NEO4J_URI,
-    NEO4J_USERNAME,
-    NEO4J_PASSWORD,
-    TRAFFIC_CSV_PATH,
-    ALERTS_JSON_PATH,
+    get_neo4j_config,
+    get_ingestion_config,
     APP_NAME,
 )
 from src.ingestion import (
@@ -60,8 +57,9 @@ def main():
     driver = None
 
     try:
-        # --- 1. Ingestion: Load & Parse Traffic Data ---
-        traffic_records, traffic_summary = parse_traffic_file(TRAFFIC_CSV_PATH)
+        # --- 1. Ingestion: Retrieve Ingestion Configuration & Parse Data ---
+        ingestion_cfg = get_ingestion_config()
+        traffic_records, traffic_summary = parse_traffic_file(ingestion_cfg["traffic_csv_path"])
         logger.info(
             "Traffic Ingestion: %d raw -> %d valid unique (%d skipped, %d duplicates)",
             traffic_summary.total_raw_records,
@@ -70,8 +68,7 @@ def main():
             traffic_summary.duplicate_records,
         )
 
-        # --- 2. Ingestion: Load & Parse Alert Data ---
-        alert_records, alert_summary = parse_alert_file(ALERTS_JSON_PATH)
+        alert_records, alert_summary = parse_alert_file(ingestion_cfg["alerts_json_path"])
         logger.info(
             "Alert Ingestion: %d raw -> %d valid (%d skipped)",
             alert_summary.total_raw_records,
@@ -79,16 +76,20 @@ def main():
             alert_summary.skipped_records,
         )
 
-        # --- 3. Connect to Neo4j (Driver Lifecycle Managed by main) ---
-        logger.info("Connecting to Neo4j at %s ...", NEO4J_URI)
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+        # --- 2. Connect to Neo4j (Driver Lifecycle Managed by main) ---
+        neo4j_cfg = get_neo4j_config()
+        logger.info("Connecting to Neo4j at %s ...", neo4j_cfg["uri"])
+        driver = GraphDatabase.driver(
+            neo4j_cfg["uri"],
+            auth=(neo4j_cfg["username"], neo4j_cfg["password"]),
+        )
         driver.verify_connectivity()
         logger.info("Neo4j connection established.")
 
-        # --- 4. Apply Schema Constraints & Indexes ---
+        # --- 3. Apply Schema Constraints & Indexes ---
         ensure_schema(driver)
 
-        # --- 5. Persist to Neo4j via Repository ---
+        # --- 4. Persist to Neo4j via Repository ---
         repo = Neo4jRepository(driver)
         persisted_traffic = repo.write_traffic_records(traffic_records)
         persisted_alerts = repo.write_alert_records(alert_records)
