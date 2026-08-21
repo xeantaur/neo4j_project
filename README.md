@@ -15,15 +15,15 @@ The resulting graph models:
 - **Layer 3 communication** — directional IP-to-IP flows with observed protocol properties
 - **Layer 2 communication** — directional interface-to-interface frame flows
 - **Layer 2 / Layer 3 resolution** — observed associations between IP addresses and Layer 2 identifiers
-- **Security alert facts** — discrete, normalized alert facts preserving source-target pairings and rule metadata
+- **Security alert facts** — unique normalized alert facts preserving source-target pairings and rule metadata
 
 ## Technologies
 
 | Technology | Purpose |
 |---|---|
 | Python 3.9+ | Main language (Actively verified on Python 3.11.9) |
-| FastAPI | Modern, typed, asynchronous/multithreaded REST API framework |
-| Uvicorn | High-performance ASGI server |
+| FastAPI | Typed REST API framework |
+| Uvicorn | ASGI application server |
 | Pydantic v2 | Strict request validation, canonicalization, and response serialization |
 | pandas | Tabular network traffic parsing, cleaning, and deduplication |
 | Neo4j 5.x | Graph database with uniqueness constraints and RANGE indexes |
@@ -237,7 +237,19 @@ $env:NEO4J_TEST_PASSWORD="<your-test-password>"
 python -m pytest tests/test_neo4j_integration.py -v
 ```
 
-> **Note:** The live integration suite has **not** yet been executed in the current development environment as no disposable Neo4j instance was available.
+> **Important Notes:**
+> - Integration tests require explicit `RUN_NEO4J_INTEGRATION=1`, `NEO4J_TEST_URI`, `NEO4J_TEST_USERNAME`, and `NEO4J_TEST_PASSWORD` environment variables.
+> - Live integration tests **never** fall back to normal application Neo4j credentials (`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`).
+> - The live integration suite must always target a dedicated/disposable test database instance.
+> - The live integration suite has **not** yet been executed in the current development environment because no disposable Neo4j test instance was available.
+
+## Migration Policy
+
+The modern Phase 3+ graph schema is designed to be **rebuilt directly from normalized source datasets** rather than migrated in-place from the legacy prototype schema (`:IP`, `:MAC`, `:DESTINATION`, `:ASSOCIATED_WITH`, `:ALERT`). No destructive database cleanup is performed automatically.
+
+## Security Notice
+
+Historical commits from the original internship prototype contained hardcoded credentials. Those historical credentials must be considered **compromised** and must never be reused in any environment. Active application configuration is loaded exclusively from environment variables via `.env` (excluded from version control).
 
 ## Project Structure
 
