@@ -4,7 +4,12 @@ Unit tests for IDS alert parser (JSON).
 
 import json
 import pytest
-from src.ingestion.alert_parser import parse_alert_file, _validate_port
+from src.ingestion.alert_parser import (
+    parse_alert_file,
+    _validate_port,
+    _validate_positive_int,
+    _validate_non_negative_int,
+)
 from src.ingestion.models import AlertRecord
 
 
@@ -19,6 +24,24 @@ def test_validate_port():
     assert _validate_port(-1) is None
     assert _validate_port("invalid_port") is None
     assert _validate_port(None) is None
+
+
+def test_validate_positive_and_non_negative_ints():
+    """Test priority and sid/gid/rev semantic validation helpers."""
+    # Priority requires strictly positive (> 0)
+    assert _validate_positive_int(1) == 1
+    assert _validate_positive_int("3") == 3
+    assert _validate_positive_int(0) is None
+    assert _validate_positive_int(-1) is None
+    assert _validate_positive_int("invalid") is None
+
+    # sid/gid/rev requires non-negative (>= 0)
+    assert _validate_non_negative_int(0) == 0
+    assert _validate_non_negative_int(9001) == 9001
+    assert _validate_non_negative_int("0") == 0
+    assert _validate_non_negative_int(-1) is None
+    assert _validate_non_negative_int("-50") is None
+    assert _validate_non_negative_int("not_a_number") is None
 
 
 def test_parse_sample_alerts_file():
@@ -91,7 +114,7 @@ def test_alert_integer_coercion_and_optional_none(tmp_path):
 
 
 def test_alert_invalid_optional_fields_do_not_drop_record(tmp_path):
-    """Test that invalid optional fields (port, priority) become None and do NOT drop the record."""
+    """Test that invalid optional fields (port, priority, sid) become None and do NOT drop the record."""
     data = [
         {
             "src_ip": "10.0.0.1",
@@ -121,6 +144,55 @@ def test_alert_invalid_optional_fields_do_not_drop_record(tmp_path):
     assert a.sid is None
     assert a.message == "Alert with bad optional fields"
     assert "invalid_src_port" in summary.warning_counts
+
+
+def test_alert_negative_and_zero_optional_integer_semantics(tmp_path):
+    """Test semantic bounds: priority must be > 0, sid/gid/rev must be >= 0."""
+    data = [
+        {
+            # Negative priority and negative sid/gid/rev
+            "src_ip": "10.0.0.1",
+            "dst_ip": "10.0.0.2",
+            "priority": -1,
+            "sid": -100,
+            "gid": -5,
+            "rev": -1,
+            "message": "Negative alert integer fields",
+        },
+        {
+            # Zero priority (invalid) and zero sid/gid/rev (valid)
+            "src_ip": "10.0.0.3",
+            "dst_ip": "10.0.0.4",
+            "priority": 0,
+            "sid": 0,
+            "gid": 0,
+            "rev": 0,
+            "message": "Zero alert integer fields",
+        }
+    ]
+    test_file = tmp_path / "alerts_semantics.json"
+    test_file.write_text(json.dumps(data), encoding="utf-8")
+
+    alerts, summary = parse_alert_file(str(test_file))
+    # Records must NOT be dropped
+    assert len(alerts) == 2
+    assert summary.valid_records == 2
+    assert summary.skipped_records == 0
+
+    a0 = alerts[0]
+    assert a0.priority is None  # -1 is invalid for priority
+    assert a0.sid is None       # -100 is invalid for sid
+    assert a0.gid is None       # -5 is invalid for gid
+    assert a0.rev is None       # -1 is invalid for rev
+
+    a1 = alerts[1]
+    assert a1.priority is None  # 0 is invalid for priority (> 0 required)
+    assert a1.sid == 0          # 0 is valid for sid (>= 0)
+    assert a1.gid == 0          # 0 is valid for gid (>= 0)
+    assert a1.rev == 0          # 0 is valid for rev (>= 0)
+
+    assert "invalid_priority" in summary.warning_counts
+    assert "invalid_sid" in summary.warning_counts
 
 
 def test_alert_missing_required_ips_skipped(tmp_path):

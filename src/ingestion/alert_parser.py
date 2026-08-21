@@ -39,12 +39,27 @@ def _safe_coerce_int(val: Any) -> Optional[int]:
         return None
 
 
+def _validate_positive_int(val: Any) -> Optional[int]:
+    """Validate that value is a strictly positive integer (> 0)."""
+    val_int = _safe_coerce_int(val)
+    if val_int is not None and val_int > 0:
+        return val_int
+    return None
+
+
+def _validate_non_negative_int(val: Any) -> Optional[int]:
+    """Validate that value is a non-negative integer (>= 0)."""
+    val_int = _safe_coerce_int(val)
+    if val_int is not None and val_int >= 0:
+        return val_int
+    return None
+
+
 def _validate_port(val: Any) -> Optional[int]:
     """Validate that port is an integer between 1 and 65535."""
     port_int = _safe_coerce_int(val)
-    if port_int is not None:
-        if 1 <= port_int <= 65535:
-            return port_int
+    if port_int is not None and 1 <= port_int <= 65535:
+        return port_int
     return None
 
 
@@ -118,39 +133,47 @@ def parse_alert_file(file_path: str) -> Tuple[List[AlertRecord], IngestionSummar
             continue
 
         # Optional fields parsing with no invented fallback defaults
-        # sid
+        # sid (non-negative integer >= 0)
         raw_sid = entry.get("sid")
-        sid = _safe_coerce_int(raw_sid)
-        if raw_sid is not None and raw_sid != "" and sid is None:
-            record_warning("invalid_sid", f"Alert at index {idx} has unparseable sid '{raw_sid}'")
+        sid = None
+        if raw_sid is not None and raw_sid != "":
+            sid = _validate_non_negative_int(raw_sid)
+            if sid is None:
+                record_warning("invalid_sid", f"Alert at index {idx} has invalid sid '{raw_sid}'")
 
-        # gid
+        # gid (non-negative integer >= 0)
         raw_gid = entry.get("gid")
-        gid = _safe_coerce_int(raw_gid)
-        if raw_gid is not None and raw_gid != "" and gid is None:
-            record_warning("invalid_gid", f"Alert at index {idx} has unparseable gid '{raw_gid}'")
+        gid = None
+        if raw_gid is not None and raw_gid != "":
+            gid = _validate_non_negative_int(raw_gid)
+            if gid is None:
+                record_warning("invalid_gid", f"Alert at index {idx} has invalid gid '{raw_gid}'")
 
-        # rev
+        # rev (non-negative integer >= 0)
         raw_rev = entry.get("rev")
-        rev = _safe_coerce_int(raw_rev)
-        if raw_rev is not None and raw_rev != "" and rev is None:
-            record_warning("invalid_rev", f"Alert at index {idx} has unparseable rev '{raw_rev}'")
+        rev = None
+        if raw_rev is not None and raw_rev != "":
+            rev = _validate_non_negative_int(raw_rev)
+            if rev is None:
+                record_warning("invalid_rev", f"Alert at index {idx} has invalid rev '{raw_rev}'")
 
-        # priority
+        # priority (strictly positive integer > 0)
         raw_priority = entry.get("priority")
-        priority = _safe_coerce_int(raw_priority)
-        if raw_priority is not None and raw_priority != "" and priority is None:
-            record_warning("invalid_priority", f"Alert at index {idx} has unparseable priority '{raw_priority}'")
+        priority = None
+        if raw_priority is not None and raw_priority != "":
+            priority = _validate_positive_int(raw_priority)
+            if priority is None:
+                record_warning("invalid_priority", f"Alert at index {idx} has invalid priority '{raw_priority}'")
 
         # message
         raw_msg = entry.get("message")
-        message = str(raw_msg).strip() if raw_msg is not None else None
+        message = str(raw_msg).strip() if raw_msg is not None and str(raw_msg).strip() else None
 
         # protocol
         raw_proto = entry.get("protocol")
         protocol = str(raw_proto).strip().upper() if raw_proto is not None and str(raw_proto).strip() else None
 
-        # src_port
+        # src_port (1..65535)
         raw_src_port = entry.get("src_port")
         src_port = None
         if raw_src_port is not None and raw_src_port != "":
@@ -158,7 +181,7 @@ def parse_alert_file(file_path: str) -> Tuple[List[AlertRecord], IngestionSummar
             if src_port is None:
                 record_warning("invalid_src_port", f"Alert at index {idx} has invalid src_port '{raw_src_port}'")
 
-        # dst_port
+        # dst_port (1..65535)
         raw_dst_port = entry.get("dst_port")
         dst_port = None
         if raw_dst_port is not None and raw_dst_port != "":

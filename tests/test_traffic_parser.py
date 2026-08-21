@@ -41,7 +41,8 @@ def test_parse_sample_traffic_file():
     records, summary = parse_traffic_file("data/samples/sample_traffic.tsv")
     assert len(records) > 0
     assert summary.valid_records == len(records)
-    assert summary.total_raw_records >= len(records)
+    assert summary.total_raw_records == summary.valid_records + summary.skipped_records + summary.duplicate_records
+
     # Check that sample duplicate was handled
     assert summary.duplicate_records >= 1
 
@@ -65,6 +66,7 @@ def test_parse_traffic_whitespace_and_duplicates(tmp_path):
     assert len(records) == 1
     assert summary.total_raw_records == 2
     assert summary.duplicate_records == 1
+    assert summary.total_raw_records == summary.valid_records + summary.skipped_records + summary.duplicate_records
     assert records[0].protocol == "TCP"
     assert records[0].eth_src_resolved == "02:00:00:00:00:01"
 
@@ -88,21 +90,36 @@ def test_parse_traffic_empty_and_invalid_ips(tmp_path):
     assert len(records) == 1
     assert summary.total_raw_records == 4
     assert summary.skipped_records == 3
-    assert "empty_ip" in summary.warning_counts or "invalid_ip_dst" in summary.warning_counts
+    assert summary.total_raw_records == summary.valid_records + summary.skipped_records + summary.duplicate_records
+    assert "empty_ip" in summary.warning_counts
+    assert "invalid_ip_dst" in summary.warning_counts
+    assert "empty_mac_or_identifier" in summary.warning_counts
 
 
-def test_parse_traffic_malformed_columns(tmp_path):
-    """Test handling of rows with fewer than 7 columns."""
+def test_parse_traffic_malformed_columns_too_few_and_too_many(tmp_path):
+    """Test explicit counting of rows with too few OR too many columns without silent row loss."""
     tsv_content = (
+        # Row 0: Valid (7 columns)
         "02:00:00:00:00:01\t02:00:00:00:00:02\t192.168.1.10\t192.168.1.20\t-\t-\tTCP\n"
-        "02:00:00:00:00:01\t02:00:00:00:00:02\t192.168.1.10\n"  # only 3 columns
+        # Row 1: Too few columns (only 3 columns)
+        "02:00:00:00:00:01\t02:00:00:00:00:02\t192.168.1.10\n"
+        # Row 2: Too many columns (9 columns)
+        "02:00:00:00:00:01\t02:00:00:00:00:02\t192.168.1.10\t192.168.1.20\t-\t-\tTCP\textra1\textra2\n"
+        # Row 3: Valid (7 columns)
+        "02:00:00:00:00:01\t02:00:00:00:00:03\t192.168.1.10\t10.0.0.5\t-\t-\tUDP\n"
     )
-    test_file = tmp_path / "traffic_malformed.tsv"
+    test_file = tmp_path / "traffic_malformed_counts.tsv"
     test_file.write_text(tsv_content, encoding="utf-8")
 
     records, summary = parse_traffic_file(str(test_file))
-    assert len(records) == 1
-    assert summary.skipped_records == 1
+    assert len(records) == 2
+    assert summary.total_raw_records == 4
+    assert summary.skipped_records == 2
+    assert summary.valid_records == 2
+    assert summary.duplicate_records == 0
+    # Internal metric consistency check
+    assert summary.total_raw_records == summary.valid_records + summary.skipped_records + summary.duplicate_records
+    assert summary.warning_counts["malformed_columns"] == 2
 
 
 def test_parse_traffic_missing_file():

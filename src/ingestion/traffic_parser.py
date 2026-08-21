@@ -1,16 +1,16 @@
 """
 Parser and normalizer for network traffic export data (tshark/Wireshark TSV).
 
-Processes tabular Layer 2/Layer 3 traffic records using pandas and standard
-validation libraries without requiring PySpark or a JVM runtime.
+Processes tabular Layer 2/Layer 3 traffic records with explicit line-by-line validation,
+preserving non-MAC resolved identifiers and avoiding silent malformed row loss.
 """
 
+import csv
 import ipaddress
 import logging
 import os
 import re
 from typing import List, Tuple, Dict
-import pandas as pd
 
 from src.ingestion.models import TrafficRecord, IngestionSummary
 
@@ -59,50 +59,13 @@ def parse_traffic_file(file_path: str) -> Tuple[List[TrafficRecord], IngestionSu
     
     Raises:
         FileNotFoundError: If the input file does not exist.
-        ValueError: If file is completely empty or cannot be read.
+        ValueError: If file cannot be read.
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Traffic file not found: {file_path}")
 
     logger.info("Parsing traffic data from: %s", file_path)
 
-    # Read TSV using pandas with all columns as string to prevent unwanted type coercion
-    try:
-        # Check first line to detect if header exists
-        sample_df = pd.read_csv(file_path, sep="\t", nrows=5, header=None, dtype=str)
-        if sample_df.empty:
-            return [], IngestionSummary(
-                total_raw_records=0,
-                valid_records=0,
-                skipped_records=0,
-                duplicate_records=0,
-            )
-    except pd.errors.EmptyDataError:
-        return [], IngestionSummary(
-            total_raw_records=0,
-            valid_records=0,
-            skipped_records=0,
-            duplicate_records=0,
-        )
-    except Exception as exc:
-        raise ValueError(f"Failed to read traffic file {file_path}: {exc}") from exc
-
-    # Check if file has header matching standard column names
-    first_row = sample_df.iloc[0].tolist()
-    has_header = any("eth_src" in str(col).lower() or "ip_src" in str(col).lower() for col in first_row)
-
-    try:
-        if has_header:
-            df = pd.read_csv(file_path, sep="\t", header=0, dtype=str, on_bad_lines="skip")
-            # Normalize column names
-            col_map = {c: c.strip().lower() for c in df.columns}
-            df = df.rename(columns=col_map)
-        else:
-            df = pd.read_csv(file_path, sep="\t", header=None, dtype=str, on_bad_lines="skip")
-    except Exception as exc:
-        raise ValueError(f"Error parsing tabular data from {file_path}: {exc}") from exc
-
-    total_raw = len(df)
     warning_counts: Dict[str, int] = {}
     sample_errors: List[str] = []
 
@@ -112,34 +75,71 @@ def parse_traffic_file(file_path: str) -> Tuple[List[TrafficRecord], IngestionSu
             sample_errors.append(f"{reason}: {detail}")
         logger.warning("Traffic parse warning [%s]: %s", reason, detail)
 
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            reader = csv.reader(f, delimiter="\t")
+            raw_rows = [row for row in reader if any(cell.strip() for cell in row)]
+    except Exception as exc:
+        raise ValueError(f"Error reading traffic file {file_path}: {exc}") from exc
+
+    if not raw_rows:
+        return [], IngestionSummary(
+            total_raw_records=0,
+            valid_records=0,
+            skipped_records=0,
+            duplicate_records=0,
+        )
+
+    # Detect header presence on first row
+    first_row = raw_rows[0]
+    has_header = any("eth_src" in cell.lower() or "ip_src" in cell.lower() for cell in first_row)
+
+    header_cols = {}
+    if has_header:
+        header_cols = {col_name.strip().lower(): idx for idx, col_name in enumerate(first_row)}
+        data_rows = raw_rows[1:]
+        total_raw = len(data_rows)
+    else:
+        data_rows = raw_rows
+        total_raw = len(data_rows)
+
     valid_records: List[TrafficRecord] = []
     skipped_count = 0
 
-    for idx, row in df.iterrows():
-        # Handle column extraction based on header presence or column index
+    for idx, row in enumerate(data_rows, start=1 if has_header else 0):
+        # Explicit validation of column count to prevent silent row drops
         if has_header:
-            eth_src_raw = row.get("eth_src_resolved") or row.get("eth_src") or ""
-            eth_dst_raw = row.get("eth_dst_resolved") or row.get("eth_dst") or ""
-            ip_src_raw = row.get("ip_src") or ""
-            ip_dst_raw = row.get("ip_dst") or ""
-            protocol_raw = row.get("protocol") or "UNKNOWN"
-        else:
-            if len(row) < 7:
-                record_warning("malformed_columns", f"Row {idx} has only {len(row)} columns, expected at least 7")
+            if len(row) != len(first_row):
+                record_warning("malformed_columns", f"Row {idx} has {len(row)} columns, expected {len(first_row)}")
                 skipped_count += 1
                 continue
-            eth_src_raw = row.iloc[0]
-            eth_dst_raw = row.iloc[1]
-            ip_src_raw = row.iloc[2]
-            ip_dst_raw = row.iloc[3]
-            protocol_raw = row.iloc[6]
+            eth_src_idx = header_cols.get("eth_src_resolved") or header_cols.get("eth_src")
+            eth_dst_idx = header_cols.get("eth_dst_resolved") or header_cols.get("eth_dst")
+            ip_src_idx = header_cols.get("ip_src")
+            ip_dst_idx = header_cols.get("ip_dst")
+            proto_idx = header_cols.get("protocol")
 
-        # Convert NaN or non-string to empty string
-        eth_src = str(eth_src_raw).strip() if pd.notna(eth_src_raw) else ""
-        eth_dst = str(eth_dst_raw).strip() if pd.notna(eth_dst_raw) else ""
-        ip_src = str(ip_src_raw).strip() if pd.notna(ip_src_raw) else ""
-        ip_dst = str(ip_dst_raw).strip() if pd.notna(ip_dst_raw) else ""
-        protocol = str(protocol_raw).strip().upper() if pd.notna(protocol_raw) else "UNKNOWN"
+            eth_src_raw = row[eth_src_idx] if eth_src_idx is not None and eth_src_idx < len(row) else ""
+            eth_dst_raw = row[eth_dst_idx] if eth_dst_idx is not None and eth_dst_idx < len(row) else ""
+            ip_src_raw = row[ip_src_idx] if ip_src_idx is not None and ip_src_idx < len(row) else ""
+            ip_dst_raw = row[ip_dst_idx] if ip_dst_idx is not None and ip_dst_idx < len(row) else ""
+            protocol_raw = row[proto_idx] if proto_idx is not None and proto_idx < len(row) else "UNKNOWN"
+        else:
+            if len(row) != 7:
+                record_warning("malformed_columns", f"Row {idx} has {len(row)} columns, expected exactly 7")
+                skipped_count += 1
+                continue
+            eth_src_raw = row[0]
+            eth_dst_raw = row[1]
+            ip_src_raw = row[2]
+            ip_dst_raw = row[3]
+            protocol_raw = row[6]
+
+        eth_src = eth_src_raw.strip()
+        eth_dst = eth_dst_raw.strip()
+        ip_src = ip_src_raw.strip()
+        ip_dst = ip_dst_raw.strip()
+        protocol = protocol_raw.strip().upper() if protocol_raw.strip() else "UNKNOWN"
 
         # Validation: non-empty MAC/identifiers
         if not eth_src or not eth_dst:
@@ -147,7 +147,7 @@ def parse_traffic_file(file_path: str) -> Tuple[List[TrafficRecord], IngestionSu
             skipped_count += 1
             continue
 
-        # Validation: valid IP addresses
+        # Validation: non-empty and valid IP addresses
         if not ip_src or not ip_dst:
             record_warning("empty_ip", f"Row {idx} contains empty ip_src or ip_dst")
             skipped_count += 1
