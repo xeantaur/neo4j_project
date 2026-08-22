@@ -38,9 +38,9 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
         style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
         title="Select graph layout"
       >
+        <option value="cose">COSE (Force Directed)</option>
         <option value="breadthfirst">Breadthfirst (Hierarchical)</option>
-        <option value="cose">CoSE (Clustered)</option>
-        <option value="concentric">Concentric (Type Rings)</option>
+        <option value="concentric">Concentric</option>
       </select>
 
       <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border-subtle)' }} />

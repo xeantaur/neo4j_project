@@ -2,7 +2,7 @@ import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import cytoscape from 'cytoscape';
 import type { Core, EventObject } from 'cytoscape';
 import type { GraphNeighborhoodResponse } from '../../api/types';
-import { transformGraphToElements } from './transformGraphData';
+import { transformGraphToElements, formatBreadthfirstRootSelector } from './transformGraphData';
 import { cytoscapeStylesheet } from './cytoscapeStyle';
 
 export type LayoutName = 'breadthfirst' | 'cose' | 'concentric';
@@ -86,7 +86,7 @@ export const CytoscapeCanvas = forwardRef<CytoscapeCanvasHandle, CytoscapeCanvas
         layoutOptions = {
           name: 'breadthfirst',
           directed: true,
-          roots: [`#${centerId.replace(':', '\\:')}`],
+          roots: [formatBreadthfirstRootSelector(centerId)],
           spacingFactor: 1.2,
           animate: false,
         };
@@ -157,12 +157,11 @@ export const CytoscapeCanvas = forwardRef<CytoscapeCanvasHandle, CytoscapeCanvas
       <div
         ref={containerRef}
         style={{
-          width: '100%',
-          height: '100%',
+          position: 'absolute',
+          inset: 0,
           backgroundColor: 'var(--bg-canvas)',
           borderRadius: 'var(--radius-md)',
           overflow: 'hidden',
-          position: 'relative',
         }}
       />
     );

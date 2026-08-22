@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   generateFrontendEdgeId,
   transformGraphToElements,
+  formatBreadthfirstRootSelector,
 } from '../components/graph/transformGraphData';
 import type { GraphNeighborhoodResponse } from '../api/types';
 
@@ -14,6 +15,20 @@ describe('Graph Data Transformation', () => {
     expect(id1).toBe(id2);
     expect(id1).not.toBe(id3);
     expect(id1).toContain('edge:');
+  });
+
+  it('formats breadthfirst root selector using safe attribute matching for IPv4 and IPv6 without fragile escaping', () => {
+    // IPv4 with dots and colons
+    const ipv4Selector = formatBreadthfirstRootSelector('ip:192.168.1.10');
+    expect(ipv4Selector).toBe('[id = "ip:192.168.1.10"]');
+
+    // IPv6 with multiple colons
+    const ipv6Selector = formatBreadthfirstRootSelector('ip:2001:db8::1');
+    expect(ipv6Selector).toBe('[id = "ip:2001:db8::1"]');
+
+    // Layer 2 identifier with MAC colons
+    const l2Selector = formatBreadthfirstRootSelector('l2:02:00:00:00:00:01');
+    expect(l2Selector).toBe('[id = "l2:02:00:00:00:00:01"]');
   });
 
   it('transforms neighborhood response into Cytoscape elements with center node marked', () => {

@@ -269,4 +269,37 @@ describe('NetworkExplorerPage Behavioral Tests', () => {
       expect(screen.getByText('Database unavailable')).toBeInTheDocument();
     });
   });
+
+  it('E. Layout Configuration: defaults to COSE (Force Directed) and allows switching layouts', async () => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/api/v1/graph/neighborhood/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockNeighborhood) });
+      }
+      if (url.includes('/api/v1/network/ips?')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIpList) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    }) as unknown as typeof fetch;
+
+    render(<NetworkExplorerPage initialCenterIp="192.168.1.100" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-node-count')).toHaveTextContent('3 nodes');
+    });
+
+    const layoutSelect = screen.getByTitle('Select graph layout') as HTMLSelectElement;
+    expect(layoutSelect.value).toBe('cose');
+
+    // Verify option labels and order
+    const options = Array.from(layoutSelect.options).map((o) => ({ value: o.value, text: o.text }));
+    expect(options).toEqual([
+      { value: 'cose', text: 'COSE (Force Directed)' },
+      { value: 'breadthfirst', text: 'Breadthfirst (Hierarchical)' },
+      { value: 'concentric', text: 'Concentric' },
+    ]);
+
+    // Switch to breadthfirst
+    fireEvent.change(layoutSelect, { target: { value: 'breadthfirst' } });
+    expect(layoutSelect.value).toBe('breadthfirst');
+  });
 });
