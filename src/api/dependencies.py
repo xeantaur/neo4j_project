@@ -11,6 +11,7 @@ from neo4j import GraphDatabase, Driver
 
 from src.config import get_optional_neo4j_config
 from src.graph.read_repository import Neo4jReadRepository
+from src.graph.repository import Neo4jRepository
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,21 @@ def get_read_repository(request: Request) -> Neo4jReadRepository:
     """Provide a Neo4jReadRepository initialized with the shared driver from app state."""
     driver = getattr(request.app.state, "driver", None)
     return Neo4jReadRepository(driver)
+
+
+def get_write_repository(request: Request) -> Neo4jRepository:
+    """Provide a Neo4jRepository initialized with the shared driver from app state.
+
+    Raises:
+        HTTPException (503): If the shared database driver is unavailable.
+    """
+    driver = getattr(request.app.state, "driver", None)
+    if driver is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Database service unavailable",
+        )
+    return Neo4jRepository(driver)
 
 
 def validate_canonical_ip(ip_str: str) -> str:

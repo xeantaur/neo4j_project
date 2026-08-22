@@ -126,3 +126,33 @@ def test_parse_traffic_missing_file():
     """Test that non-existent file raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError):
         parse_traffic_file("data/samples/non_existent_file_xyz.tsv")
+
+
+def test_parse_traffic_headered_with_index_0(tmp_path):
+    """Regression test: verify headered TSV where eth_src_resolved is column 0 parses correctly."""
+    tsv_content = (
+        "eth_src_resolved\teth_dst_resolved\tip_src\tip_dst\tunused1\tunused2\tprotocol\n"
+        "02:00:00:00:00:01\t02:00:00:00:00:02\t192.168.1.10\t192.168.1.20\t-\t-\tTCP\n"
+        "02:00:00:00:00:01\t02:00:00:00:00:03\t192.168.1.10\t192.168.1.30\t-\t-\tUDP\n"
+    )
+    test_file = tmp_path / "traffic_headered.tsv"
+    test_file.write_text(tsv_content, encoding="utf-8")
+
+    records, summary = parse_traffic_file(str(test_file))
+    assert len(records) == 2
+    assert summary.total_raw_records == 2
+    assert summary.valid_records == 2
+    assert summary.skipped_records == 0
+    assert summary.duplicate_records == 0
+
+    assert records[0].eth_src_resolved == "02:00:00:00:00:01"
+    assert records[0].eth_dst_resolved == "02:00:00:00:00:02"
+    assert records[0].ip_src == "192.168.1.10"
+    assert records[0].ip_dst == "192.168.1.20"
+    assert records[0].protocol == "TCP"
+
+    assert records[1].eth_src_resolved == "02:00:00:00:00:01"
+    assert records[1].eth_dst_resolved == "02:00:00:00:00:03"
+    assert records[1].ip_src == "192.168.1.10"
+    assert records[1].ip_dst == "192.168.1.30"
+    assert records[1].protocol == "UDP"

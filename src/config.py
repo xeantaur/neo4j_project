@@ -9,7 +9,7 @@ the API and CLI components.
 
 import os
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from dotenv import load_dotenv
 
 # Load .env file if present (does not override existing env vars)
@@ -84,3 +84,32 @@ def get_cors_origins() -> List[str]:
     if not raw_origins or not raw_origins.strip():
         return []
     return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
+
+def get_data_import_config() -> Dict[str, Any]:
+    """Retrieve configuration for browser data import and workspace replacement.
+
+    Defaults to disabled (DATA_IMPORT_ENABLED=false) with a conservative 10 MiB limit.
+
+    Raises:
+        EnvironmentError: If DATA_IMPORT_MAX_FILE_SIZE_MB is not a valid positive integer.
+    """
+    raw_enabled = os.getenv("DATA_IMPORT_ENABLED", "false").strip().lower()
+    enabled = raw_enabled in ("true", "1", "yes", "t")
+
+    raw_max_mb = os.getenv("DATA_IMPORT_MAX_FILE_SIZE_MB", "10").strip()
+    try:
+        max_file_size_mb = int(raw_max_mb)
+        if max_file_size_mb <= 0:
+            raise ValueError()
+    except (ValueError, TypeError):
+        raise EnvironmentError(
+            f"Invalid DATA_IMPORT_MAX_FILE_SIZE_MB value '{raw_max_mb}'. "
+            f"Expected a positive integer (e.g. 10)."
+        )
+
+    return {
+        "enabled": enabled,
+        "max_file_size_mb": max_file_size_mb,
+        "max_file_size_bytes": max_file_size_mb * 1024 * 1024,
+    }

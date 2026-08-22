@@ -10,7 +10,7 @@ from neo4j.exceptions import ServiceUnavailable, AuthError
 
 from src.config import get_cors_origins, APP_NAME
 from src.api.dependencies import lifespan
-from src.api.routes import health, network, alerts, correlations, graph
+from src.api.routes import health, network, alerts, correlations, graph, import_data
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,11 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
     app = FastAPI(
         title=f"{APP_NAME} — Graph Query API",
-        version="1.0.0",
+        version="1.1.0",
         description=(
-            "Read-only REST API for exploring network traffic topology, "
-            "Layer 2/3 associations, and normalized security alert facts in Neo4j."
+            "Read-oriented graph analysis API with explicitly gated data-import "
+            "mutation endpoints for exploring network traffic topology, Layer 2/3 associations, "
+            "and normalized security alert facts in Neo4j."
         ),
         lifespan=lifespan,
     )
@@ -36,7 +37,7 @@ def create_app() -> FastAPI:
             CORSMiddleware,
             allow_origins=cors_origins,
             allow_credentials=True,
-            allow_methods=["GET", "OPTIONS"],
+            allow_methods=["GET", "POST", "OPTIONS"],
             allow_headers=["*"],
         )
 
@@ -79,6 +80,7 @@ def create_app() -> FastAPI:
     app.include_router(alerts.router)
     app.include_router(correlations.router)
     app.include_router(graph.router)
+    app.include_router(import_data.router)
 
     return app
 

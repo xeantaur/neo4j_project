@@ -2,7 +2,7 @@
 Pydantic response models and schemas for the FastAPI backend API.
 """
 
-from typing import Generic, List, Optional, TypeVar, Literal
+from typing import Generic, List, Optional, TypeVar, Literal, Dict
 from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
@@ -131,3 +131,52 @@ class PaginatedResponse(BaseModel, Generic[T]):
     offset: int = Field(description="Offset of the first item in the collection")
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+# --- Data Import & Workspace Replacement Schemas (Phase 6.5) ---
+
+class ImportStatusResponse(BaseModel):
+    """Data import enablement status and file size limit configuration."""
+    enabled: bool = Field(description="Whether browser data import and workspace replacement are enabled")
+    max_file_size_bytes: int = Field(description="Maximum allowable file size in bytes")
+    max_file_size_mb: int = Field(description="Maximum allowable file size in megabytes")
+
+
+class FileValidationResult(BaseModel):
+    """Validation diagnostics and parsing summary for an individual uploaded file."""
+    provided: bool = Field(description="Whether this file source was provided in the upload")
+    filename: Optional[str] = Field(default=None, description="Original filename metadata")
+    total_raw_records: Optional[int] = Field(default=None, description="Total raw input lines or items parsed")
+    valid_records: Optional[int] = Field(default=None, description="Count of valid normalized domain records")
+    skipped_records: Optional[int] = Field(default=None, description="Count of skipped or malformed records")
+    duplicate_records: Optional[int] = Field(default=None, description="Count of duplicate records identified")
+    warning_counts: Dict[str, int] = Field(default_factory=dict, description="Categorized warning counts")
+    sample_errors: List[str] = Field(default_factory=list, description="Bounded sample error descriptions")
+
+
+class ImportValidationResponse(BaseModel):
+    """Stateless validation response comparing uploaded data against ingestion rules."""
+    valid: bool = Field(description="Overall validity of the provided upload dataset")
+    can_import: bool = Field(description="Whether the dataset satisfies requirements for workspace replacement")
+    traffic: FileValidationResult = Field(description="Validation results for network traffic dataset")
+    alerts: FileValidationResult = Field(description="Validation results for security alerts dataset")
+    message: str = Field(description="Summary message describing validation outcome")
+
+
+class ImportCapabilities(BaseModel):
+    """Available analysis capabilities derived from the imported source datasets."""
+    network_topology: bool = Field(description="Whether network topology visualization is available")
+    ip_investigation: bool = Field(description="Whether IP address context investigation is available")
+    communication_paths: bool = Field(description="Whether path exploration analysis is applicable")
+    alert_facts: bool = Field(description="Whether security alert facts are present")
+    traffic_alert_correlations: bool = Field(description="Whether traffic/alert correlation analysis is applicable")
+
+
+class ImportResultResponse(BaseModel):
+    """Atomic workspace replacement result."""
+    success: bool = Field(description="Whether the active workspace was successfully replaced")
+    workspace_replaced: bool = Field(description="Confirmation that previous workspace data was cleared and replaced")
+    traffic_records_persisted: int = Field(description="Count of TrafficRecord observations persisted")
+    alert_facts_persisted: int = Field(description="Count of AlertFact nodes persisted")
+    capabilities: ImportCapabilities = Field(description="Active analysis capabilities in the new workspace")
+    message: str = Field(description="Human-readable result summary")
