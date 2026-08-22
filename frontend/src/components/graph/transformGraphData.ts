@@ -78,3 +78,12 @@ export function transformGraphToElements(
 
   return elements;
 }
+
+/**
+ * Format a Cytoscape root selector for breadthfirst layout.
+ * Uses exact attribute matching ([id = "..."]) to avoid CSS selector
+ * parsing issues with dots (.) and colons (:) in IPv4/IPv6 addresses.
+ */
+export function formatBreadthfirstRootSelector(centerId: string): string {
+  return `[id = "${centerId}"]`;
+}

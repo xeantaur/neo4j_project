@@ -25,7 +25,7 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
   const [centerInput, setCenterInput] = useState<string>(initialCenterIp || '192.168.1.100');
   const [depth, setDepth] = useState<1 | 2>(1);
   const [maxNodes, setMaxNodes] = useState<number>(50);
-  const [layoutName, setLayoutName] = useState<LayoutName>('breadthfirst');
+  const [layoutName, setLayoutName] = useState<LayoutName>('cose');
 
   // Graph state
   const [graphData, setGraphData] = useState<GraphNeighborhoodResponse | null>(null);
