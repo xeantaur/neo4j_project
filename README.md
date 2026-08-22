@@ -1,5 +1,7 @@
 # Network Traffic & Security Alert Analysis with Neo4j
 
+[![CI](https://github.com/s3rt4c/neo4j_project/actions/workflows/ci.yml/badge.svg)](https://github.com/s3rt4c/neo4j_project/actions/workflows/ci.yml)
+
 Graph-based network traffic and security alert analysis using Neo4j, FastAPI, and React with Cytoscape.js.
 
 > **Origin:** This project was originally developed during a cybersecurity internship (September 2024). It is being modernized from an internship prototype into a portfolio-quality cybersecurity analysis tool. The original prototype used PySpark and unindexed row-by-row `CREATE` relationships; the modernized system uses a lightweight pandas ingestion pipeline, a normalized fact-based graph model, batched `UNWIND` persistence with Neo4j 5.x constraints, a read-only FastAPI REST backend, and an interactive React + Cytoscape.js web dashboard.
@@ -9,7 +11,7 @@ Graph-based network traffic and security alert analysis using Neo4j, FastAPI, an
 This application processes two types of cybersecurity data, loads them into a Neo4j graph database for relationship analysis, and provides a typed REST API and web dashboard:
 
 1. **Network traffic data** (tshark/Wireshark TSV export) — Layer 2 identifiers, IP addresses, and observed protocols
-2. **IDS/Snort alert data** (JSON array) — security alerts with rule IDs, severity ratings, and connection details
+2. **IDS/Snort alert data** (JSON array) — security alerts with rule IDs, numeric priority values, protocol/port metadata, and source-target information
 
 The resulting graph models:
 - **Layer 3 communication** — directional IP-to-IP flows with observed protocol properties
@@ -21,7 +23,7 @@ The resulting graph models:
 
 | Technology | Purpose |
 |---|---|
-| Python 3.10+ | Main backend language (Actively verified on Python 3.11.9) |
+| Python 3.10+ | Main backend language (CI verified on Python 3.10 and 3.14; local live integration verified on Python 3.11.9) |
 | FastAPI | Typed REST API framework |
 | Uvicorn | ASGI application server |
 | Pydantic v2 | Strict request validation, canonicalization, and response serialization |
@@ -31,7 +33,7 @@ The resulting graph models:
 | python-dotenv | Environment-based configuration with lazy loading |
 | pytest | Automated backend test suite (unit tests, API test client, and opt-in live Neo4j integration tests) |
 | React 19 | Frontend user interface framework |
-| TypeScript 5+ | Type-safe frontend client and component modeling |
+| TypeScript 6 | Type-safe frontend client and component modeling |
 | Vite 8 | Frontend build toolchain and development server with API proxying |
 | Cytoscape.js 3+ | Interactive graph visualization engine (hierarchical, force-directed, concentric layouts) |
 | Vitest | Frontend component and unit test suite |
@@ -45,7 +47,7 @@ Network traffic (TSV)             IDS alerts (JSON)
           ▼                              ▼
 src/ingestion/traffic_parser.py   src/ingestion/alert_parser.py
   - TSV extraction & cleaning       - JSON array parsing
-  - MAC normalization               - Type coercion & validation
+  - Layer 2 identifier norm.        - Type coercion & validation
   - IP validation & deduplication   - Missing fields -> None
           │                              │
           ▼                              ▼
@@ -408,7 +410,7 @@ This project is being modernized through the following planned phases:
 | ~~3~~ | ~~Redesign Neo4j graph model & persistence~~ (schema, batching, facts) | Graph schema, repository, integration tests | ✅ Complete |
 | ~~4~~ | ~~Add backend API~~ (FastAPI read-only REST API) | API route & ReadRepository unit tests | ✅ Complete |
 | ~~5~~ | ~~Add web dashboard~~ (React 19 + TypeScript + Cytoscape.js) | Vitest frontend test suite & build verification | ✅ Complete |
-| 6 | Integration validation, CI, regression coverage & hardening | Live Neo4j integration, FastAPI live test, CI workflows | 🔄 In Progress |
+| ~~6~~ | ~~Integration validation, CI, regression coverage & hardening~~ | Live Neo4j integration, FastAPI live test, CI workflows | ✅ Complete |
 | 7 | Advanced security analytics | Analytics-specific tests | 🔲 Planned |
 
 ## License
