@@ -1,32 +1,44 @@
-# React + TypeScript + Vite
+# Security Investigation Dashboard (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + TypeScript + Cytoscape.js web application for investigating network traffic topology, Layer 2 associations, normalized security alert facts, and communication paths powered by the read-only FastAPI backend.
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### 1. Install Dependencies
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### 2. Development Server
+
+```bash
+npm run dev
+```
+
+By default, Vite runs at `http://localhost:5173`.
+
+### 3. API Proxy & Base URL Configuration
+
+- **Development Proxy:** The Vite dev server automatically proxies `/api`, `/health`, and `/ready` requests to the local FastAPI backend running at `http://127.0.0.1:8000`.
+- **API Base URL Override:** The environment variable `VITE_API_BASE_URL` can optionally be set to override the target API root. When unset, requests default to same-origin / proxy paths.
+
+## Available Scripts
+
+- `npm run dev`: Starts the Vite development server with Hot Module Replacement (HMR).
+- `npm run build`: Type-checks with TypeScript compiler (`tsc -b`) and produces a static production bundle in `dist/`.
+- `npm run test`: Runs the Vitest test suite in interactive watch mode.
+- `npm run test:run`: Runs the Vitest test suite once with `@testing-library/react` and `jsdom`.
+- `npm run lint`: Runs `oxlint` for fast static code analysis.
+
+## Architecture
+
+- **`src/api/`**: Typed native-fetch API client matching FastAPI Pydantic response models with explicit nullability.
+- **`src/components/graph/`**: Cytoscape.js canvas integration with hierarchical, force-directed, and concentric layout algorithms.
+- **`src/components/layout/`**: Header with live backend health/readiness pills and node inspection drawer.
+- **`src/pages/`**: Single-page application views:
+  - `OverviewPage`: Aggregate metrics and workflow navigation.
+  - `NetworkExplorerPage`: Center-rooted neighborhood graph and inspection.
+  - `AlertExplorerPage`: Normalized security alert facts table and detail modal.
+  - `CorrelationsPage`: Traffic/alert co-occurrence analysis.
+  - `PathFinderPage`: Observed communication path finding.
