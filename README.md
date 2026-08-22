@@ -1,12 +1,12 @@
 # Network Traffic & Security Alert Analysis with Neo4j
 
-Graph-based network traffic and security alert analysis using Neo4j and FastAPI.
+Graph-based network traffic and security alert analysis using Neo4j, FastAPI, and React with Cytoscape.js.
 
-> **Origin:** This project was originally developed during a cybersecurity internship (September 2024). It is being modernized from an internship prototype into a portfolio-quality cybersecurity analysis tool. The original prototype used PySpark and unindexed row-by-row `CREATE` relationships; the modernized system uses a lightweight pandas ingestion pipeline, a normalized fact-based graph model, batched `UNWIND` persistence with Neo4j 5.x constraints, and a read-only FastAPI REST backend.
+> **Origin:** This project was originally developed during a cybersecurity internship (September 2024). It is being modernized from an internship prototype into a portfolio-quality cybersecurity analysis tool. The original prototype used PySpark and unindexed row-by-row `CREATE` relationships; the modernized system uses a lightweight pandas ingestion pipeline, a normalized fact-based graph model, batched `UNWIND` persistence with Neo4j 5.x constraints, a read-only FastAPI REST backend, and an interactive React + Cytoscape.js web dashboard.
 
 ## What It Does
 
-This application processes two types of cybersecurity data, loads them into a Neo4j graph database for relationship analysis, and provides a typed REST API:
+This application processes two types of cybersecurity data, loads them into a Neo4j graph database for relationship analysis, and provides a typed REST API and web dashboard:
 
 1. **Network traffic data** (tshark/Wireshark TSV export) — Layer 2 identifiers, IP addresses, and observed protocols
 2. **IDS/Snort alert data** (JSON array) — security alerts with rule IDs, severity ratings, and connection details
@@ -21,7 +21,7 @@ The resulting graph models:
 
 | Technology | Purpose |
 |---|---|
-| Python 3.9+ | Main language (Actively verified on Python 3.11.9) |
+| Python 3.9+ | Main backend language (Actively verified on Python 3.11.9) |
 | FastAPI | Typed REST API framework |
 | Uvicorn | ASGI application server |
 | Pydantic v2 | Strict request validation, canonicalization, and response serialization |
@@ -29,7 +29,12 @@ The resulting graph models:
 | Neo4j 5.x | Graph database with uniqueness constraints and RANGE indexes |
 | neo4j (Python driver) | Database connectivity with managed retry-safe transactions (`session.execute_read` / `session.execute_write`) |
 | python-dotenv | Environment-based configuration with lazy loading |
-| pytest | Automated test suite (unit tests, API test client, and opt-in live Neo4j integration tests) |
+| pytest | Automated backend test suite (unit tests, API test client, and opt-in live Neo4j integration tests) |
+| React 19 | Frontend user interface framework |
+| TypeScript 5+ | Type-safe frontend client and component modeling |
+| Vite 8 | Frontend build toolchain and development server with API proxying |
+| Cytoscape.js 3+ | Interactive graph visualization engine (hierarchical, force-directed, concentric layouts) |
+| Vitest | Frontend component and unit test suite |
 
 ## Architecture
 
@@ -76,6 +81,20 @@ src/api/routes/
   ├── alerts.py        (GET /api/v1/alerts/*)
   ├── correlations.py  (GET /api/v1/correlations/*)
   └── graph.py         (GET /api/v1/graph/*)
+                         ▲
+                         │ REST / JSON (Vite Dev Proxy)
+                         │
+[ Web Dashboard & Visualization — frontend/ (React 19 + Cytoscape.js) ]
+frontend/src/
+  ├── pages/
+  │   ├── OverviewPage.tsx         (Entity totals, health indicators)
+  │   ├── NetworkExplorerPage.tsx  (Cytoscape graph canvas, depth toggle, IP inspector)
+  │   ├── AlertExplorerPage.tsx    (Normalized alert facts table & detail modal)
+  │   ├── CorrelationsPage.tsx     (Traffic & alert co-occurrence table)
+  │   └── PathFinderPage.tsx       (Directional L3 communication hop chain visualizer)
+  └── components/graph/
+      ├── CytoscapeCanvas.tsx      (Interactive canvas lifecycle & event bindings)
+      └── cytoscapeStyle.ts        (Dark cybersecurity theme stylesheet)
 ```
 
 ## Neo4j Graph Model
@@ -177,10 +196,18 @@ All collection endpoints return a standardized pagination envelope:
 
 ### 1. Clone and install dependencies
 
+#### Backend (Python)
 ```bash
 git clone <repository-url>
 cd neo4j_project
 pip install -r requirements.txt
+```
+
+#### Frontend (Node.js)
+```bash
+cd frontend
+npm install
+cd ..
 ```
 
 ### 2. Configure environment
@@ -200,7 +227,7 @@ NEO4J_PASSWORD=your_actual_password
 TRAFFIC_CSV_PATH=data/samples/sample_traffic.tsv
 ALERTS_JSON_PATH=data/samples/sample_alerts.json
 # Optional: comma-separated origins (CORS disabled if unset)
-# CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+# CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
 ### 3. Run Ingestion CLI
@@ -215,12 +242,40 @@ python -m src.main
 uvicorn src.api.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 5. Run Automated Tests
+### 5. Start the Frontend Web Dashboard
 
-Execute the test suite (all unit and API tests run 100% in-memory with mocked drivers and zero network calls):
+In a separate terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+### 6. Run Automated Tests
+
+#### Backend Test Suite
+Execute Python unit and API tests (100% in-memory with mocked drivers and zero network calls):
 
 ```bash
 pytest
+```
+
+#### Frontend Test Suite
+Execute Vitest component and client tests:
+
+```bash
+cd frontend
+npm run test:run
+```
+
+#### Frontend Production Build
+Verify TypeScript compilation and static bundle generation:
+
+```bash
+cd frontend
+npm run build
 ```
 
 #### Opt-In Live Neo4j Integration Testing
@@ -259,6 +314,36 @@ neo4j_project/
 │   └── samples/
 │       ├── sample_traffic.tsv     # Synthetic RFC 1918 traffic data
 │       └── sample_alerts.json      # Synthetic IDS alert data
+├── frontend/                      # Phase 5 React 19 + TypeScript + Cytoscape.js Dashboard
+│   ├── src/
+│   │   ├── api/                   # Typed API client modules & interfaces
+│   │   │   ├── client.ts          # Native fetch wrapper with ApiError parsing
+│   │   │   ├── types.ts           # Exact TypeScript models matching Pydantic schemas
+│   │   │   ├── system.ts          # Health & readiness API functions
+│   │   │   ├── network.ts         # IPs, peers, and Layer 2 API functions
+│   │   │   ├── alerts.ts          # Alert facts API functions
+│   │   │   ├── correlations.ts    # Correlation API functions
+│   │   │   └── graph.ts           # Neighborhood & path finding API functions
+│   │   ├── components/
+│   │   │   ├── common/            # Reusable UI (StatusPill, Badge, Pagination, Modal, Skeleton)
+│   │   │   ├── graph/             # CytoscapeCanvas, layout controls, legend, data transformer
+│   │   │   ├── layout/            # Header with status pills, SlideDrawer
+│   │   │   └── network/           # IPDetailPanel, Layer2DetailPanel
+│   │   ├── pages/
+│   │   │   ├── OverviewPage.tsx   # Aggregate counts and workflow cards
+│   │   │   ├── NetworkExplorerPage.tsx # Bounded neighborhood canvas & drawer
+│   │   │   ├── AlertExplorerPage.tsx   # Filterable alert facts & detail modal
+│   │   │   ├── CorrelationsPage.tsx    # Traffic/alert co-occurrence table
+│   │   │   └── PathFinderPage.tsx      # Shortest path hop chain visualizer
+│   │   ├── styles/
+│   │   │   ├── variables.css      # Dark cybersecurity design tokens
+│   │   │   └── global.css         # Reset and global utility classes
+│   │   ├── test/                  # Vitest component & unit tests
+│   │   ├── App.tsx                # App shell & health monitoring
+│   │   └── main.tsx               # Root entry point
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts             # Vite configuration with /api proxy & Vitest setup
 ├── src/
 │   ├── __init__.py
 │   ├── config.py                  # Centralized configuration with lazy access
@@ -327,14 +412,17 @@ This project is being modernized through the following planned phases:
 - ✅ Parameterized `UNWIND` batched writes with managed transactions (`session.execute_write`)
 - ✅ Read-only FastAPI backend API with Pydantic v2 schemas and OpenAPI documentation
 - ✅ Dedicated endpoints for IPs, peers, Layer 2 associations, alert facts, correlations, neighborhood, and shortest path
-- ✅ Automated test suite with 82 passing unit/API tests (`pytest`)
+- ✅ Interactive React 19 + TypeScript web dashboard with dark cybersecurity theme
+- ✅ Cytoscape.js graph neighborhood canvas with hierarchical, force-directed, and concentric layouts
+- ✅ IP inspection drawer, Layer 2 inspection, alert fact inspector, correlation table, and shortest path chain visualizer
+- ✅ Automated backend test suite with 82 passing unit/API tests (`pytest`)
+- ✅ Automated frontend test suite with 15 passing unit/component tests (`vitest`)
 - ✅ Synthetic sample datasets included
 - ✅ Structured Python logging and deterministic resource cleanup
 
 ### Planned Features
 
-- 🔲 Web dashboard with graph visualization (Phase 5)
-- 🔲 Docker Compose deployment (Phase 5)
+- 🔲 Docker Compose deployment
 - 🔲 Coverage improvements and regression hardening (Phase 6)
 - 🔲 Advanced security analytics (timeline, scoring, detection) (Phase 7)
 
@@ -347,7 +435,7 @@ This project is being modernized through the following planned phases:
 | ~~2~~ | ~~Refactor ingestion pipeline~~ (pandas migration, models, tests) | Ingestion/parser unit tests | ✅ Complete |
 | ~~3~~ | ~~Redesign Neo4j graph model & persistence~~ (schema, batching, facts) | Graph schema, repository, integration tests | ✅ Complete |
 | ~~4~~ | ~~Add backend API~~ (FastAPI read-only REST API) | API route & ReadRepository unit tests | ✅ Complete |
-| 5 | Add web dashboard | Basic frontend/API integration verification | 🔲 Planned |
+| ~~5~~ | ~~Add web dashboard~~ (React 19 + TypeScript + Cytoscape.js) | Vitest frontend test suite & build verification | ✅ Complete |
 | 6 | Final quality pass | Coverage improvements, regression tests, documentation | 🔲 Planned |
 | 7 | Advanced security analytics | Analytics-specific tests | 🔲 Planned |
 
