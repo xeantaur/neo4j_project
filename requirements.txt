@@ -1,5 +1,5 @@
 # Network Traffic & Security Alert Analysis — Dependencies
-# Requires Python 3.9+
+# Requires Python 3.10+ (Python 3.9 is EOL)
 #
 # Ingestion pipeline uses pandas and standard Python modules (no JVM/Java requirement).
 # Backend API uses FastAPI and Uvicorn.
