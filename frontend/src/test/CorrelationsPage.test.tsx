@@ -20,6 +20,9 @@ describe('CorrelationsPage Component', () => {
           source_ip: '192.168.1.100',
           target_ip: '192.168.1.1',
           traffic_protocol: 'TCP',
+          traffic_flow_key: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+          traffic_src_port: 54321,
+          traffic_dst_port: 22,
           fact_key: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
           sid: 2001219,
           message: 'ET SCAN Potential SSH Scan',
@@ -43,6 +46,8 @@ describe('CorrelationsPage Component', () => {
       expect(screen.getByText('ET SCAN Potential SSH Scan')).toBeInTheDocument();
       expect(screen.getByText('192.168.1.100')).toBeInTheDocument();
       expect(screen.getByText('192.168.1.1')).toBeInTheDocument();
+      expect(screen.getByText('54321 → 22')).toBeInTheDocument();
+      expect(screen.getByText('abcdef12…')).toBeInTheDocument();
     });
 
     // Verify footer wording is "correlation records", NOT "pairs"

@@ -46,12 +46,28 @@ describe('Graph Data Transformation', () => {
           target: 'ip:192.168.1.1',
           type: 'COMMUNICATED_TO',
           protocol: 'TCP',
+          flow_key: null,
+          src_port: null,
+          dst_port: null,
+          observed_packet_count: null,
+          observed_bytes: null,
+          first_seen: null,
+          last_seen: null,
+          observed_window_seconds: null,
         },
         {
           source: 'ip:192.168.1.100',
           target: 'l2:00:50:56:c0:00:08',
           type: 'OBSERVED_WITH',
           protocol: null,
+          flow_key: null,
+          src_port: null,
+          dst_port: null,
+          observed_packet_count: null,
+          observed_bytes: null,
+          first_seen: null,
+          last_seen: null,
+          observed_window_seconds: null,
         },
       ],
     };
@@ -91,6 +107,73 @@ describe('Graph Data Transformation', () => {
     }
   });
 
+  it('generates unique edge IDs using flow_key and preserves parallel flows with different ports', () => {
+    const mockData: GraphNeighborhoodResponse = {
+      center: '10.0.0.1',
+      depth: 1,
+      nodes: [
+        { id: 'ip:10.0.0.1', type: 'IPAddress', value: '10.0.0.1' },
+        { id: 'ip:10.0.0.2', type: 'IPAddress', value: '10.0.0.2' },
+      ],
+      edges: [
+        {
+          source: 'ip:10.0.0.1',
+          target: 'ip:10.0.0.2',
+          type: 'COMMUNICATED_TO',
+          protocol: 'TCP',
+          flow_key: 'flow_key_1111111111111111111111111111111111111111111111111111111111111111',
+          src_port: 50000,
+          dst_port: 80,
+          observed_packet_count: 10,
+          observed_bytes: 1024,
+          first_seen: 100.0,
+          last_seen: 110.0,
+          observed_window_seconds: 10.0,
+        },
+        {
+          source: 'ip:10.0.0.1',
+          target: 'ip:10.0.0.2',
+          type: 'COMMUNICATED_TO',
+          protocol: 'TCP',
+          flow_key: 'flow_key_2222222222222222222222222222222222222222222222222222222222222222',
+          src_port: 50001,
+          dst_port: 443,
+          observed_packet_count: 25,
+          observed_bytes: 4096,
+          first_seen: 105.0,
+          last_seen: 115.0,
+          observed_window_seconds: 10.0,
+        },
+      ],
+    };
+
+    const elements = transformGraphToElements(mockData);
+    // 2 nodes + 2 distinct parallel edges = 4 elements
+    expect(elements.length).toBe(4);
+
+    const edge1 = elements.find(
+      (e) => 'flow_key' in e.data && e.data.flow_key?.startsWith('flow_key_1')
+    );
+    const edge2 = elements.find(
+      (e) => 'flow_key' in e.data && e.data.flow_key?.startsWith('flow_key_2')
+    );
+
+    expect(edge1).toBeDefined();
+    expect(edge2).toBeDefined();
+    expect(edge1?.data.id).not.toBe(edge2?.data.id);
+
+    if (edge1 && 'dst_port' in edge1.data) {
+      expect(edge1.data.label).toBe('TCP · :80');
+      expect(edge1.data.dst_port).toBe(80);
+      expect(edge1.data.observed_bytes).toBe(1024);
+    }
+    if (edge2 && 'dst_port' in edge2.data) {
+      expect(edge2.data.label).toBe('TCP · :443');
+      expect(edge2.data.dst_port).toBe(443);
+      expect(edge2.data.observed_bytes).toBe(4096);
+    }
+  });
+
   it('deduplicates identical edge definitions', () => {
     const mockData: GraphNeighborhoodResponse = {
       center: '10.0.0.1',
@@ -100,8 +183,34 @@ describe('Graph Data Transformation', () => {
         { id: 'ip:10.0.0.2', type: 'IPAddress', value: '10.0.0.2' },
       ],
       edges: [
-        { source: 'ip:10.0.0.1', target: 'ip:10.0.0.2', type: 'COMMUNICATED_TO', protocol: 'TCP' },
-        { source: 'ip:10.0.0.1', target: 'ip:10.0.0.2', type: 'COMMUNICATED_TO', protocol: 'TCP' }, // duplicate
+        {
+          source: 'ip:10.0.0.1',
+          target: 'ip:10.0.0.2',
+          type: 'COMMUNICATED_TO',
+          protocol: 'TCP',
+          flow_key: null,
+          src_port: null,
+          dst_port: null,
+          observed_packet_count: null,
+          observed_bytes: null,
+          first_seen: null,
+          last_seen: null,
+          observed_window_seconds: null,
+        },
+        {
+          source: 'ip:10.0.0.1',
+          target: 'ip:10.0.0.2',
+          type: 'COMMUNICATED_TO',
+          protocol: 'TCP',
+          flow_key: null,
+          src_port: null,
+          dst_port: null,
+          observed_packet_count: null,
+          observed_bytes: null,
+          first_seen: null,
+          last_seen: null,
+          observed_window_seconds: null,
+        }, // duplicate
       ],
     };
 

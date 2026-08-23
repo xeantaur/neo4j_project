@@ -5,9 +5,40 @@ import type {
   PeerResponse,
   Layer2IdentifierResponse,
   CommunicationResponse,
+  TrafficAnalyticsSummaryResponse,
+  EndpointAnalyticsResponse,
   PaginatedResponse,
 } from './types';
 
+// Traffic analytics (Phase 7C)
+export function getTrafficAnalyticsSummary(
+  signal?: AbortSignal
+): Promise<TrafficAnalyticsSummaryResponse> {
+  return request<TrafficAnalyticsSummaryResponse>('/api/v1/network/analytics/summary', { signal });
+}
+
+export type EndpointAnalyticsSortBy =
+  | 'fan_out'
+  | 'fan_in'
+  | 'observed_bytes_sent'
+  | 'observed_bytes_received'
+  | 'observed_packets_sent'
+  | 'observed_packets_received';
+
+export function listEndpointAnalytics(
+  sortBy: EndpointAnalyticsSortBy = 'fan_out',
+  limit: number = 50,
+  offset: number = 0,
+  signal?: AbortSignal
+): Promise<PaginatedResponse<EndpointAnalyticsResponse>> {
+  return request<PaginatedResponse<EndpointAnalyticsResponse>>(
+    '/api/v1/network/analytics/endpoints',
+    { signal },
+    { sort_by: sortBy, limit, offset }
+  );
+}
+
+// Topology & context endpoints
 export function listIPs(
   limit: number = 50,
   offset: number = 0,
@@ -59,6 +90,9 @@ export interface ListCommunicationsParams {
   source_ip?: string | null;
   target_ip?: string | null;
   protocol?: string | null;
+  src_port?: number | null;
+  dst_port?: number | null;
+  sort_by?: 'identity' | 'observed_bytes' | 'observed_packets' | 'first_seen';
   limit?: number;
   offset?: number;
 }
@@ -74,6 +108,9 @@ export function listCommunications(
       source_ip: params?.source_ip,
       target_ip: params?.target_ip,
       protocol: params?.protocol,
+      src_port: params?.src_port,
+      dst_port: params?.dst_port,
+      sort_by: params?.sort_by,
       limit: params?.limit ?? 50,
       offset: params?.offset ?? 0,
     }

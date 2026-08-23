@@ -4,11 +4,13 @@ import { listIPs } from '../api/network';
 import type { GraphNeighborhoodResponse, IPAddressResponse } from '../api/types';
 import { CytoscapeCanvas } from '../components/graph/CytoscapeCanvas';
 import type { LayoutName, CytoscapeCanvasHandle } from '../components/graph/CytoscapeCanvas';
+import type { CytoscapeEdgeData } from '../components/graph/transformGraphData';
 import { GraphControls } from '../components/graph/GraphControls';
 import { GraphLegend } from '../components/graph/GraphLegend';
 import { SlideDrawer } from '../components/layout/SlideDrawer';
 import { IPDetailPanel } from '../components/network/IPDetailPanel';
 import { Layer2DetailPanel } from '../components/network/Layer2DetailPanel';
+import { CommunicationEdgePanel } from '../components/network/CommunicationEdgePanel';
 import { Skeleton } from '../components/common/Skeleton';
 import type { ActiveView } from '../components/layout/Header';
 
@@ -38,6 +40,9 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
     type: 'IPAddress' | 'Layer2Identifier';
     value: string;
   } | null>(null);
+
+  // Selected edge state
+  const [selectedEdge, setSelectedEdge] = useState<CytoscapeEdgeData | null>(null);
 
   // Observed IP quick-pick list with pagination support
   const [ipList, setIpList] = useState<IPAddressResponse[]>([]);
@@ -70,6 +75,7 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
     setLoading(true);
     setError(null);
     setSelectedNode(null);
+    setSelectedEdge(null);
 
     getNeighborhood(addressToQuery.trim(), depth, maxNodes)
       .then((data) => {
@@ -313,8 +319,16 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
             ref={canvasRef}
             data={graphData}
             layoutName={layoutName}
-            onNodeSelect={setSelectedNode}
+            onNodeSelect={(node) => {
+              setSelectedNode(node);
+              if (node) setSelectedEdge(null);
+            }}
+            onEdgeSelect={(edge) => {
+              setSelectedEdge(edge);
+              if (edge) setSelectedNode(null);
+            }}
             selectedNodeId={selectedNode?.id}
+            selectedEdgeId={selectedEdge?.id}
           />
         ) : (
           <div
@@ -336,12 +350,29 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
           <GraphLegend />
         </div>
 
-        {/* Slide Drawer for Selected Node Details */}
+        {/* Slide Drawer for Selected Node / Edge Details */}
         <SlideDrawer
-          isOpen={selectedNode !== null}
-          onClose={() => setSelectedNode(null)}
-          title={selectedNode?.type === 'IPAddress' ? 'IP Investigation' : 'Layer 2 Inspection'}
-          subtitle={selectedNode ? selectedNode.id : undefined}
+          isOpen={selectedNode !== null || selectedEdge !== null}
+          onClose={() => {
+            setSelectedNode(null);
+            setSelectedEdge(null);
+          }}
+          title={
+            selectedNode
+              ? selectedNode.type === 'IPAddress'
+                ? 'IP Investigation'
+                : 'Layer 2 Inspection'
+              : 'Observed Communication Aggregate'
+          }
+          subtitle={
+            selectedNode
+              ? selectedNode.id
+              : selectedEdge
+              ? selectedEdge.label
+                ? `${selectedEdge.type} · ${selectedEdge.label}`
+                : selectedEdge.type
+              : undefined
+          }
         >
           {selectedNode?.type === 'IPAddress' && (
             <IPDetailPanel
@@ -364,6 +395,20 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
           )}
           {selectedNode?.type === 'Layer2Identifier' && (
             <Layer2DetailPanel identifier={selectedNode.value} />
+          )}
+          {selectedEdge && (
+            <CommunicationEdgePanel
+              edge={selectedEdge}
+              onSelectCenter={(addr) => {
+                setSelectedEdge(null);
+                handleReCenter(addr);
+              }}
+              onSetPathEndpoints={(src, dst) => {
+                if (onNavigate) {
+                  onNavigate('path', { sourceIp: src, targetIp: dst });
+                }
+              }}
+            />
           )}
         </SlideDrawer>
       </div>

@@ -21,6 +21,16 @@ describe('IPDetailPanel Component', () => {
       inbound_flows: 2,
       alerts_originated: 3,
       alerts_targeted: 1,
+      traffic_metrics_mode: 'enriched',
+      distinct_outbound_peers: 4,
+      distinct_inbound_peers: 2,
+      distinct_destination_ports: 3,
+      observed_packets_sent: 1200,
+      observed_packets_received: 400,
+      observed_bytes_sent: 204800,
+      observed_bytes_received: 35000,
+      first_observed: 1718000000.0,
+      last_observed: 1718000500.0,
     };
 
     const mockPeers = {
@@ -47,12 +57,15 @@ describe('IPDetailPanel Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('2001:db8::1')).toBeInTheDocument();
-      expect(screen.getByText('5')).toBeInTheDocument(); // Outbound
-      expect(screen.getByText('2')).toBeInTheDocument(); // Inbound
-      expect(screen.getByText('3')).toBeInTheDocument(); // Originated
+      expect(screen.getByText('5')).toBeInTheDocument(); // Outbound Aggregates
+      expect(screen.getAllByText('2').length).toBeGreaterThanOrEqual(2); // Inbound Aggregates and Inbound Peers
+      expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(2); // Originated and Distinct Dst Ports
+      expect(screen.getByText('4')).toBeInTheDocument(); // Outbound Peers
       expect(screen.getByText('1')).toBeInTheDocument(); // Targeted
       expect(screen.getByText('00:50:56:c0:00:08')).toBeInTheDocument();
       expect(screen.getByText('gateway.local')).toBeInTheDocument();
+      expect(screen.getByText('ENRICHED')).toBeInTheDocument();
+      expect(screen.getByText('200.00 KiB')).toBeInTheDocument();
     });
 
     // Verify peer list header is "Communicating Peers", NOT "Top Peers" or "Top 5"

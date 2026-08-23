@@ -2,7 +2,11 @@ import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import cytoscape from 'cytoscape';
 import type { Core, EventObject } from 'cytoscape';
 import type { GraphNeighborhoodResponse } from '../../api/types';
-import { transformGraphToElements, formatBreadthfirstRootSelector } from './transformGraphData';
+import {
+  transformGraphToElements,
+  formatBreadthfirstRootSelector,
+} from './transformGraphData';
+import type { CytoscapeEdgeData } from './transformGraphData';
 import { cytoscapeStylesheet } from './cytoscapeStyle';
 
 export type LayoutName = 'breadthfirst' | 'cose' | 'concentric';
@@ -18,11 +22,13 @@ interface CytoscapeCanvasProps {
   data: GraphNeighborhoodResponse;
   layoutName: LayoutName;
   onNodeSelect: (nodeData: { id: string; type: 'IPAddress' | 'Layer2Identifier'; value: string } | null) => void;
+  onEdgeSelect?: (edgeData: CytoscapeEdgeData | null) => void;
   selectedNodeId?: string | null;
+  selectedEdgeId?: string | null;
 }
 
 export const CytoscapeCanvas = forwardRef<CytoscapeCanvasHandle, CytoscapeCanvasProps>(
-  ({ data, layoutName, onNodeSelect, selectedNodeId }, ref) => {
+  ({ data, layoutName, onNodeSelect, onEdgeSelect, selectedNodeId, selectedEdgeId }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const cyRef = useRef<Core | null>(null);
 
@@ -113,6 +119,9 @@ export const CytoscapeCanvas = forwardRef<CytoscapeCanvasHandle, CytoscapeCanvas
           value: node.data('value'),
         };
         onNodeSelect(nodeData);
+        if (onEdgeSelect) {
+          onEdgeSelect(null);
+        }
 
         // Neighborhood focus highlighting
         cy.elements().removeClass('dimmed highlighted');
@@ -121,10 +130,30 @@ export const CytoscapeCanvas = forwardRef<CytoscapeCanvasHandle, CytoscapeCanvas
         neighborhood.addClass('highlighted');
       });
 
+      // Edge selection handler (COMMUNICATED_TO only)
+      cy.on('tap', 'edge', (evt: EventObject) => {
+        const edge = evt.target;
+        const edgeData = edge.data() as CytoscapeEdgeData;
+
+        if (edgeData.type === 'COMMUNICATED_TO' && onEdgeSelect) {
+          onEdgeSelect(edgeData);
+          onNodeSelect(null);
+
+          // Focus edge highlighting
+          cy.elements().removeClass('dimmed highlighted');
+          const connected = edge.connectedNodes().add(edge);
+          cy.elements().difference(connected).addClass('dimmed');
+          edge.addClass('highlighted');
+        }
+      });
+
       // Background tap resets selection
       cy.on('tap', (evt: EventObject) => {
         if (evt.target === cy) {
           onNodeSelect(null);
+          if (onEdgeSelect) {
+            onEdgeSelect(null);
+          }
           cy.elements().removeClass('dimmed highlighted');
         }
       });
@@ -133,9 +162,9 @@ export const CytoscapeCanvas = forwardRef<CytoscapeCanvasHandle, CytoscapeCanvas
         cy.destroy();
         cyRef.current = null;
       };
-    }, [data, layoutName, onNodeSelect]);
+    }, [data, layoutName, onNodeSelect, onEdgeSelect]);
 
-    // Sync external selectedNodeId if updated
+    // Sync external selectedNodeId / selectedEdgeId if updated
     useEffect(() => {
       const cy = cyRef.current;
       if (!cy) return;
@@ -148,10 +177,18 @@ export const CytoscapeCanvas = forwardRef<CytoscapeCanvasHandle, CytoscapeCanvas
           cy.elements().difference(neighborhood).addClass('dimmed');
           neighborhood.addClass('highlighted');
         }
+      } else if (selectedEdgeId) {
+        const selected = cy.getElementById(selectedEdgeId);
+        if (selected.length > 0) {
+          cy.elements().removeClass('dimmed highlighted');
+          const connected = selected.connectedNodes().add(selected);
+          cy.elements().difference(connected).addClass('dimmed');
+          selected.addClass('highlighted');
+        }
       } else {
         cy.elements().removeClass('dimmed highlighted');
       }
-    }, [selectedNodeId]);
+    }, [selectedNodeId, selectedEdgeId]);
 
     return (
       <div
