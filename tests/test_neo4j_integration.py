@@ -477,3 +477,251 @@ def test_live_read_repository_queries(live_neo4j_driver):
                 "MATCH (l2:Layer2Identifier) WHERE l2.identifier IN $l2s DETACH DELETE l2",
                 l2s=test_l2s,
             ).consume()
+
+
+# ============================================================================
+# Phase 7B Enriched Persistence Live Tests
+# ============================================================================
+
+@pytest.mark.integration
+def test_live_enriched_relationship_properties(live_neo4j_driver):
+    """Verify enriched TrafficRecord properties are accurately persisted to COMMUNICATED_TO."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=100)
+
+    record = TrafficRecord(
+        eth_src_resolved="02:00:00:99:00:01",
+        eth_dst_resolved="02:00:00:99:00:02",
+        ip_src="203.0.113.100",
+        ip_dst="203.0.113.200",
+        protocol="TLS",
+        src_port=50000,
+        dst_port=443,
+        observed_packet_count=10,
+        observed_bytes=2500,
+        first_seen=1725148800.0,
+        last_seen=1725148810.0,
+        observed_window_seconds=10.0,
+        observed_l2_pairs=(("02:00:00:99:00:01", "02:00:00:99:00:02"),),
+    )
+
+    try:
+        repo.write_traffic_records([record])
+
+        with live_neo4j_driver.session() as session:
+            rel = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.100'})-[r:COMMUNICATED_TO]->(dst:IPAddress {address: '203.0.113.200'}) "
+                "RETURN r.flow_key AS flow_key, r.protocol AS protocol, r.src_port AS src_port, r.dst_port AS dst_port, "
+                "r.observed_packet_count AS packet_count, r.observed_bytes AS bytes, "
+                "r.first_seen AS first_seen, r.last_seen AS last_seen, r.observed_window_seconds AS window_sec"
+            ).single()
+
+            assert rel is not None
+            assert rel["flow_key"] == record.flow_key
+            assert rel["protocol"] == "TLS"
+            assert rel["src_port"] == 50000
+            assert rel["dst_port"] == 443
+            assert rel["packet_count"] == 10
+            assert rel["bytes"] == 2500
+            assert rel["first_seen"] == 1725148800.0
+            assert rel["last_seen"] == 1725148810.0
+            assert rel["window_sec"] == 10.0
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN ['203.0.113.100', '203.0.113.200'] DETACH DELETE ip").consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier IN ['02:00:00:99:00:01', '02:00:00:99:00:02'] DETACH DELETE l2").consume()
+
+
+@pytest.mark.integration
+def test_live_multiple_source_ports_distinct_flows_idempotent(live_neo4j_driver):
+    """Verify distinct source ports produce multiple COMMUNICATED_TO edges and re-ingestion is idempotent."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=100)
+
+    records = [
+        TrafficRecord(
+            eth_src_resolved="02:00:00:99:01:01",
+            eth_dst_resolved="02:00:00:99:01:02",
+            ip_src="203.0.113.101",
+            ip_dst="203.0.113.201",
+            protocol="TLS",
+            src_port=50001,
+            dst_port=443,
+            observed_packet_count=5,
+            observed_bytes=1000,
+            first_seen=100.0,
+            last_seen=102.0,
+            observed_window_seconds=2.0,
+            observed_l2_pairs=(("02:00:00:99:01:01", "02:00:00:99:01:02"),),
+        ),
+        TrafficRecord(
+            eth_src_resolved="02:00:00:99:01:01",
+            eth_dst_resolved="02:00:00:99:01:02",
+            ip_src="203.0.113.101",
+            ip_dst="203.0.113.201",
+            protocol="TLS",
+            src_port=50002,
+            dst_port=443,
+            observed_packet_count=8,
+            observed_bytes=1600,
+            first_seen=103.0,
+            last_seen=105.0,
+            observed_window_seconds=2.0,
+            observed_l2_pairs=(("02:00:00:99:01:01", "02:00:00:99:01:02"),),
+        ),
+    ]
+
+    try:
+        # First write
+        repo.write_traffic_records(records)
+
+        with live_neo4j_driver.session() as session:
+            rels = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.101'})-[r:COMMUNICATED_TO]->(dst:IPAddress {address: '203.0.113.201'}) "
+                "RETURN r.flow_key AS flow_key, r.src_port AS src_port, r.observed_packet_count AS packet_count, r.observed_bytes AS bytes"
+            ).data()
+
+            assert len(rels) == 2
+            flow_keys = {r["flow_key"] for r in rels}
+            assert len(flow_keys) == 2
+            assert {r["src_port"] for r in rels} == {50001, 50002}
+
+        # Second write (Idempotency test)
+        repo.write_traffic_records(records)
+
+        with live_neo4j_driver.session() as session:
+            rels2 = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.101'})-[r:COMMUNICATED_TO]->(dst:IPAddress {address: '203.0.113.201'}) "
+                "RETURN r.flow_key AS flow_key, r.src_port AS src_port, r.observed_packet_count AS packet_count, r.observed_bytes AS bytes"
+            ).data()
+
+            assert len(rels2) == 2
+            # Metrics must NOT double
+            r_50001 = next(r for r in rels2 if r["src_port"] == 50001)
+            r_50002 = next(r for r in rels2 if r["src_port"] == 50002)
+            assert r_50001["packet_count"] == 5
+            assert r_50001["bytes"] == 1000
+            assert r_50002["packet_count"] == 8
+            assert r_50002["bytes"] == 1600
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN ['203.0.113.101', '203.0.113.201'] DETACH DELETE ip").consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier IN ['02:00:00:99:01:01', '02:00:00:99:01:02'] DETACH DELETE l2").consume()
+
+
+@pytest.mark.integration
+def test_live_multiple_l2_pairs_topology_persistence(live_neo4j_driver):
+    """Verify an aggregate with multiple observed_l2_pairs creates complete L2 associations and topology."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=100)
+
+    record = TrafficRecord(
+        eth_src_resolved="02:00:00:99:02:01",
+        eth_dst_resolved="02:00:00:99:02:02",
+        ip_src="203.0.113.102",
+        ip_dst="203.0.113.202",
+        protocol="HTTP",
+        src_port=52000,
+        dst_port=80,
+        observed_packet_count=6,
+        observed_bytes=1800,
+        first_seen=200.0,
+        last_seen=205.0,
+        observed_window_seconds=5.0,
+        observed_l2_pairs=(
+            ("02:00:00:99:02:01", "02:00:00:99:02:02"),
+            ("02:00:00:99:02:05", "02:00:00:99:02:02"),
+        ),
+    )
+
+    try:
+        repo.write_traffic_records([record])
+
+        with live_neo4j_driver.session() as session:
+            # 1 COMMUNICATED_TO edge
+            comm_count = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.102'})-[r:COMMUNICATED_TO]->(dst:IPAddress {address: '203.0.113.202'}) "
+                "RETURN count(r) AS c"
+            ).single()["c"]
+            assert comm_count == 1
+
+            # 3 Layer2Identifier nodes
+            l2_nodes = session.run(
+                "MATCH (n:Layer2Identifier) WHERE n.identifier IN ['02:00:00:99:02:01', '02:00:00:99:02:02', '02:00:00:99:02:05'] "
+                "RETURN count(n) AS c"
+            ).single()["c"]
+            assert l2_nodes == 3
+
+            # 2 L2_COMMUNICATED_TO topology edges
+            l2_comm_count = session.run(
+                "MATCH (src:Layer2Identifier)-[r:L2_COMMUNICATED_TO]->(dst:Layer2Identifier) "
+                "WHERE src.identifier IN ['02:00:00:99:02:01', '02:00:00:99:02:05'] AND dst.identifier = '02:00:00:99:02:02' "
+                "RETURN count(r) AS c"
+            ).single()["c"]
+            assert l2_comm_count == 2
+
+            # Source IP associated with both MACs
+            src_obs = session.run(
+                "MATCH (ip:IPAddress {address: '203.0.113.102'})-[:OBSERVED_WITH]->(l2:Layer2Identifier) "
+                "RETURN count(l2) AS c"
+            ).single()["c"]
+            assert src_obs == 2
+
+        # Re-run persistence -> check idempotency
+        repo.write_traffic_records([record])
+        with live_neo4j_driver.session() as session:
+            comm_count_2 = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.102'})-[r:COMMUNICATED_TO]->(dst:IPAddress {address: '203.0.113.202'}) "
+                "RETURN count(r) AS c"
+            ).single()["c"]
+            assert comm_count_2 == 1
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN ['203.0.113.102', '203.0.113.202'] DETACH DELETE ip").consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier IN ['02:00:00:99:02:01', '02:00:00:99:02:02', '02:00:00:99:02:05'] DETACH DELETE l2").consume()
+
+
+@pytest.mark.integration
+def test_live_legacy_record_null_properties(live_neo4j_driver):
+    """Verify legacy TrafficRecord persistence leaves enriched metric properties as null."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=100)
+
+    legacy_record = TrafficRecord(
+        eth_src_resolved="02:00:00:99:03:01",
+        eth_dst_resolved="02:00:00:99:03:02",
+        ip_src="203.0.113.103",
+        ip_dst="203.0.113.203",
+        protocol="TCP",
+    )
+
+    try:
+        repo.write_traffic_records([legacy_record])
+
+        with live_neo4j_driver.session() as session:
+            rel = session.run(
+                "MATCH (src:IPAddress {address: '203.0.113.103'})-[r:COMMUNICATED_TO]->(dst:IPAddress {address: '203.0.113.203'}) "
+                "RETURN r.flow_key AS flow_key, r.protocol AS protocol, r.src_port AS src_port, r.dst_port AS dst_port, "
+                "r.observed_packet_count AS packet_count, r.observed_bytes AS bytes, "
+                "r.first_seen AS first_seen, r.last_seen AS last_seen, r.observed_window_seconds AS window_sec"
+            ).single()
+
+            assert rel is not None
+            assert rel["flow_key"] == legacy_record.flow_key
+            assert rel["protocol"] == "TCP"
+            # Metrics and ports must be null/None (not fabricated 0 or 1)
+            assert rel["src_port"] is None
+            assert rel["dst_port"] is None
+            assert rel["packet_count"] is None
+            assert rel["bytes"] is None
+            assert rel["first_seen"] is None
+            assert rel["last_seen"] is None
+            assert rel["window_sec"] is None
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN ['203.0.113.103', '203.0.113.203'] DETACH DELETE ip").consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier IN ['02:00:00:99:03:01', '02:00:00:99:03:02'] DETACH DELETE l2").consume()

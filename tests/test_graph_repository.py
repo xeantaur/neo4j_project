@@ -225,6 +225,144 @@ def test_chunk_list():
 
 
 # ---------------------------------------------------------------------------
+# Traffic Payload & Cypher Contract Tests
+# ---------------------------------------------------------------------------
+def test_traffic_record_to_payload_legacy():
+    """Verify legacy TrafficRecord payload transformation produces exact null semantics and fallback L2 pair."""
+    from src.graph.repository import _traffic_record_to_payload
+
+    record = TrafficRecord(
+        eth_src_resolved="02:00:00:00:00:01",
+        eth_dst_resolved="02:00:00:00:00:02",
+        ip_src="192.168.1.10",
+        ip_dst="192.168.1.20",
+        protocol="TCP",
+    )
+    payload = _traffic_record_to_payload(record)
+
+    assert payload["ip_src"] == "192.168.1.10"
+    assert payload["ip_dst"] == "192.168.1.20"
+    assert payload["flow_key"] == record.flow_key
+    assert payload["protocol"] == "TCP"
+    assert payload["src_port"] is None
+    assert payload["dst_port"] is None
+    assert payload["observed_packet_count"] is None
+    assert payload["observed_bytes"] is None
+    assert payload["first_seen"] is None
+    assert payload["last_seen"] is None
+    assert payload["observed_window_seconds"] is None
+    assert payload["l2_pairs"] == [{"src": "02:00:00:00:00:01", "dst": "02:00:00:00:00:02"}]
+
+
+def test_traffic_record_to_payload_enriched():
+    """Verify enriched TrafficRecord payload transformation preserves all metrics and observed L2 pairs."""
+    from src.graph.repository import _traffic_record_to_payload
+
+    record = TrafficRecord(
+        eth_src_resolved="02:00:00:00:00:01",
+        eth_dst_resolved="02:00:00:00:00:02",
+        ip_src="2001:0db8:0000:0000:0000:0000:0000:0001",
+        ip_dst="192.168.1.20",
+        protocol="TLS",
+        src_port=50000,
+        dst_port=443,
+        observed_packet_count=15,
+        observed_bytes=4500,
+        first_seen=1725148800.0,
+        last_seen=1725148810.5,
+        observed_window_seconds=10.5,
+        observed_l2_pairs=(
+            ("02:00:00:00:00:01", "02:00:00:00:00:02"),
+            ("02:00:00:00:00:05", "02:00:00:00:00:02"),
+        ),
+    )
+    payload = _traffic_record_to_payload(record)
+
+    assert payload["ip_src"] == "2001:db8::1"  # canonicalized
+    assert payload["ip_dst"] == "192.168.1.20"
+    assert payload["flow_key"] == record.flow_key
+    assert payload["protocol"] == "TLS"
+    assert payload["src_port"] == 50000
+    assert payload["dst_port"] == 443
+    assert payload["observed_packet_count"] == 15
+    assert payload["observed_bytes"] == 4500
+    assert payload["first_seen"] == 1725148800.0
+    assert payload["last_seen"] == 1725148810.5
+    assert payload["observed_window_seconds"] == 10.5
+    assert payload["l2_pairs"] == [
+        {"src": "02:00:00:00:00:01", "dst": "02:00:00:00:00:02"},
+        {"src": "02:00:00:00:00:05", "dst": "02:00:00:00:00:02"},
+    ]
+
+
+def test_cypher_write_traffic_batch_contract():
+    """Verify CYPHER_WRITE_TRAFFIC_BATCH defines relationship identity on flow_key and persists all properties."""
+    # Must use flow_key for IP COMMUNICATED_TO identity
+    assert "-[c:COMMUNICATED_TO {flow_key: row.flow_key}]->" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "COMMUNICATED_TO {protocol: row.protocol}" not in CYPHER_WRITE_TRAFFIC_BATCH.split("FOREACH")[0]
+
+    # Must set all properties
+    assert "c.protocol = row.protocol" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "c.src_port = row.src_port" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "c.dst_port = row.dst_port" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "c.observed_packet_count = row.observed_packet_count" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "c.observed_bytes = row.observed_bytes" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "c.first_seen = row.first_seen" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "c.last_seen = row.last_seen" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "c.observed_window_seconds = row.observed_window_seconds" in CYPHER_WRITE_TRAFFIC_BATCH
+
+    # Must iterate over l2_pairs
+    assert "FOREACH (pair IN row.l2_pairs |" in CYPHER_WRITE_TRAFFIC_BATCH
+    assert "-[:L2_COMMUNICATED_TO {protocol: row.protocol}]->" in CYPHER_WRITE_TRAFFIC_BATCH
+
+
+def test_normal_write_and_atomic_replace_payload_consistency():
+    """Verify write_traffic_records and replace_workspace_data produce identical payload transformations."""
+    from src.graph.repository import _traffic_record_to_payload
+
+    record = TrafficRecord(
+        eth_src_resolved="02:00:00:00:00:01",
+        eth_dst_resolved="02:00:00:00:00:02",
+        ip_src="192.168.1.10",
+        ip_dst="192.168.1.20",
+        protocol="HTTP",
+        src_port=51234,
+        dst_port=80,
+        observed_packet_count=5,
+        observed_bytes=1500,
+        first_seen=100.0,
+        last_seen=105.0,
+        observed_window_seconds=5.0,
+        observed_l2_pairs=(("02:00:00:00:00:01", "02:00:00:00:00:02"),),
+    )
+
+    # 1. Normal write mock
+    mock_session1 = MagicMock()
+    mock_driver1 = MagicMock()
+    mock_driver1.session.return_value.__enter__.return_value = mock_session1
+    repo1 = Neo4jRepository(mock_driver1)
+    repo1.write_traffic_records([record])
+
+    # 2. Atomic replacement mock
+    mock_session2 = MagicMock()
+    mock_driver2 = MagicMock()
+    mock_driver2.session.return_value.__enter__.return_value = mock_session2
+    def fake_execute_write(fn):
+        tx = MagicMock()
+        return fn(tx)
+    mock_session2.execute_write.side_effect = fake_execute_write
+    repo2 = Neo4jRepository(mock_driver2)
+    repo2.replace_workspace_data(traffic_records=[record])
+
+    # Direct transformation
+    expected_payload = [_traffic_record_to_payload(record)]
+
+    # Validate work function calls
+    call_args_normal = mock_session1.execute_write.call_args[0][1]
+    assert call_args_normal == expected_payload
+
+
+# ---------------------------------------------------------------------------
 # Repository Write Tests (Mock Driver)
 # ---------------------------------------------------------------------------
 def test_repository_write_traffic_records():
@@ -250,7 +388,20 @@ def test_repository_write_traffic_records():
     # Test work function directly with a mock transaction
     mock_tx = MagicMock()
     batch_payload = [
-        {"ip_src": "192.168.1.10", "ip_dst": "192.168.1.20", "eth_src_resolved": "02:00:00:00:00:01", "eth_dst_resolved": "02:00:00:00:00:02", "protocol": "TCP"}
+        {
+            "ip_src": "192.168.1.10",
+            "ip_dst": "192.168.1.20",
+            "flow_key": records[0].flow_key,
+            "protocol": "TCP",
+            "src_port": None,
+            "dst_port": None,
+            "observed_packet_count": None,
+            "observed_bytes": None,
+            "first_seen": None,
+            "last_seen": None,
+            "observed_window_seconds": None,
+            "l2_pairs": [{"src": "02:00:00:00:00:01", "dst": "02:00:00:00:00:02"}],
+        }
     ]
     Neo4jRepository._execute_traffic_batch(mock_tx, batch_payload)
     mock_tx.run.assert_called_once_with(CYPHER_WRITE_TRAFFIC_BATCH, batch=batch_payload)
