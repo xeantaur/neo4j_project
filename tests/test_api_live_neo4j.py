@@ -235,3 +235,27 @@ def test_live_api_graph_endpoints(api_test_client):
     # 5. Path 404s
     assert api_test_client.get("/api/v1/graph/path?source=198.51.100.254&target=198.51.100.102").status_code == 404
     assert api_test_client.get("/api/v1/graph/path?source=198.51.100.103&target=198.51.100.101").status_code == 404
+
+
+@pytest.mark.integration
+def test_live_api_analytics_endpoints(api_test_client):
+    """Verify /api/v1/network/analytics/summary and /api/v1/network/analytics/endpoints routes."""
+    # 1. Summary
+    r_sum = api_test_client.get("/api/v1/network/analytics/summary")
+    assert r_sum.status_code == 200
+    data_sum = r_sum.json()
+    assert "traffic_metrics_mode" in data_sum
+    assert data_sum["total_communication_aggregates"] >= 2
+    assert "protocol_distribution" in data_sum
+    assert "top_fan_out" in data_sum
+    assert "top_fan_in" in data_sum
+
+    # 2. Endpoints
+    r_ep = api_test_client.get("/api/v1/network/analytics/endpoints?sort_by=fan_out&limit=10&offset=0")
+    assert r_ep.status_code == 200
+    data_ep = r_ep.json()
+    assert "items" in data_ep
+    assert data_ep["total"] >= 2
+    assert len(data_ep["items"]) >= 2
+    ep_addrs = [item["address"] for item in data_ep["items"]]
+    assert "198.51.100.101" in ep_addrs

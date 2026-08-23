@@ -47,6 +47,58 @@ def test_get_graph_neighborhood_depth_1(client_and_mock_repo):
     mock_repo.get_neighborhood.assert_called_once_with("192.168.1.10", depth=1, max_nodes=50)
 
 
+def test_get_graph_neighborhood_parallel_edges_serialization(client_and_mock_repo):
+    """Verify neighborhood response serializes parallel same-protocol edges with distinct flow_key and ports."""
+    client, mock_repo = client_and_mock_repo
+    mock_repo.get_neighborhood.return_value = {
+        "center": "10.0.0.1",
+        "depth": 1,
+        "nodes": [
+            {"id": "ip:10.0.0.1", "type": "IPAddress", "value": "10.0.0.1"},
+            {"id": "ip:10.0.0.2", "type": "IPAddress", "value": "10.0.0.2"},
+        ],
+        "edges": [
+            {
+                "source": "ip:10.0.0.1",
+                "target": "ip:10.0.0.2",
+                "type": "COMMUNICATED_TO",
+                "protocol": "TLS",
+                "flow_key": "1" * 64,
+                "src_port": 50001,
+                "dst_port": 443,
+                "observed_packet_count": 5,
+                "observed_bytes": 1000,
+                "first_seen": 100.0,
+                "last_seen": 102.0,
+                "observed_window_seconds": 2.0,
+            },
+            {
+                "source": "ip:10.0.0.1",
+                "target": "ip:10.0.0.2",
+                "type": "COMMUNICATED_TO",
+                "protocol": "TLS",
+                "flow_key": "2" * 64,
+                "src_port": 50002,
+                "dst_port": 443,
+                "observed_packet_count": 8,
+                "observed_bytes": 1600,
+                "first_seen": 103.0,
+                "last_seen": 105.0,
+                "observed_window_seconds": 2.0,
+            },
+        ],
+    }
+
+    response = client.get("/api/v1/graph/neighborhood/10.0.0.1")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["edges"]) == 2
+    assert data["edges"][0]["flow_key"] == "1" * 64
+    assert data["edges"][0]["src_port"] == 50001
+    assert data["edges"][1]["flow_key"] == "2" * 64
+    assert data["edges"][1]["src_port"] == 50002
+
+
 def test_get_graph_neighborhood_depth_validation(client_and_mock_repo):
     """Verify invalid depth (< 1 or > 2) returns 422."""
     client, _ = client_and_mock_repo

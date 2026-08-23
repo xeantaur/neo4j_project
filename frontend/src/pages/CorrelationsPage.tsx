@@ -74,10 +74,12 @@ export const CorrelationsPage: React.FC<CorrelationsPageProps> = ({ onNavigate }
               <th>Source IP</th>
               <th>Target IP</th>
               <th>Traffic Protocol</th>
+              <th>Traffic Ports</th>
               <th>Alert Protocol</th>
               <th>SID</th>
               <th>Alert Message</th>
-              <th style={{ width: '160px' }}>Actions</th>
+              <th>Flow Key</th>
+              <th style={{ width: '150px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -85,24 +87,26 @@ export const CorrelationsPage: React.FC<CorrelationsPageProps> = ({ onNavigate }
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   <td><Skeleton height="20px" width="70px" /></td>
-                  <td><Skeleton height="20px" width="100px" /></td>
-                  <td><Skeleton height="20px" width="100px" /></td>
-                  <td><Skeleton height="20px" width="60px" /></td>
-                  <td><Skeleton height="20px" width="60px" /></td>
+                  <td><Skeleton height="20px" width="90px" /></td>
+                  <td><Skeleton height="20px" width="90px" /></td>
+                  <td><Skeleton height="20px" width="50px" /></td>
                   <td><Skeleton height="20px" width="70px" /></td>
-                  <td><Skeleton height="20px" width="85%" /></td>
-                  <td><Skeleton height="20px" width="120px" /></td>
+                  <td><Skeleton height="20px" width="50px" /></td>
+                  <td><Skeleton height="20px" width="60px" /></td>
+                  <td><Skeleton height="20px" width="80%" /></td>
+                  <td><Skeleton height="20px" width="60px" /></td>
+                  <td><Skeleton height="20px" width="110px" /></td>
                 </tr>
               ))
             ) : correlations.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                   No correlated traffic-alert records found in the graph.
                 </td>
               </tr>
             ) : (
               correlations.map((corr, idx) => (
-                <tr key={`${corr.fact_key}-${corr.traffic_protocol}-${idx}`}>
+                <tr key={corr.traffic_flow_key ? `${corr.fact_key}-${corr.traffic_flow_key}` : `${corr.fact_key}-${corr.traffic_protocol}-${idx}`}>
                   <td>
                     <PriorityBadge priority={corr.priority} />
                   </td>
@@ -119,6 +123,11 @@ export const CorrelationsPage: React.FC<CorrelationsPageProps> = ({ onNavigate }
                   <td>
                     <Tag label={corr.traffic_protocol} variant="cyan" />
                   </td>
+                  <td className="font-mono" style={{ fontSize: '0.8rem' }}>
+                    {corr.traffic_src_port != null || corr.traffic_dst_port != null
+                      ? `${corr.traffic_src_port ?? '—'} → ${corr.traffic_dst_port ?? '—'}`
+                      : '—'}
+                  </td>
                   <td>
                     {corr.alert_protocol ? (
                       <Tag label={corr.alert_protocol} variant="slate" />
@@ -131,6 +140,9 @@ export const CorrelationsPage: React.FC<CorrelationsPageProps> = ({ onNavigate }
                   </td>
                   <td style={{ fontWeight: 500 }}>
                     {corr.message || '—'}
+                  </td>
+                  <td className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }} title={corr.traffic_flow_key || undefined}>
+                    {corr.traffic_flow_key ? `${corr.traffic_flow_key.slice(0, 8)}…` : '—'}
                   </td>
                   <td>
                     {onNavigate && (

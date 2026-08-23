@@ -4,6 +4,11 @@ import type { IPDetailResponse, PeerResponse } from '../../api/types';
 import { Tag } from '../common/Badge';
 import { Skeleton } from '../common/Skeleton';
 import { Pagination } from '../common/Pagination';
+import {
+  formatObservedBytes,
+  formatObservedPackets,
+  formatEpochSeconds,
+} from '../../utils/formatters';
 
 interface IPDetailPanelProps {
   address: string;
@@ -104,10 +109,24 @@ export const IPDetailPanel: React.FC<IPDetailPanelProps> = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Address Header */}
       <div>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Observed IP Address
-        </span>
-        <div style={{ fontSize: '1.2rem', fontWeight: 600, fontFamily: 'var(--font-family-mono)', color: 'var(--accent-cyan)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Observed IP Address
+          </span>
+          <Tag
+            label={(detail.traffic_metrics_mode || 'none').toUpperCase()}
+            variant={
+              detail.traffic_metrics_mode === 'enriched'
+                ? 'emerald'
+                : detail.traffic_metrics_mode === 'mixed'
+                ? 'amber'
+                : detail.traffic_metrics_mode === 'basic'
+                ? 'cyan'
+                : 'slate'
+            }
+          />
+        </div>
+        <div style={{ fontSize: '1.2rem', fontWeight: 600, fontFamily: 'var(--font-family-mono)', color: 'var(--accent-cyan)', marginTop: '0.2rem' }}>
           {detail.address}
         </div>
       </div>
@@ -143,26 +162,102 @@ export const IPDetailPanel: React.FC<IPDetailPanelProps> = ({
         )}
       </div>
 
-      {/* Traffic Flow Metrics */}
+      {/* Topology Cardinalities */}
       <div>
         <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-          Layer 3 Communications
+          Communication Topology
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          <div className="card" style={{ padding: '0.75rem' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Outbound Flows</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              {detail.outbound_flows}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.6rem' }}>
+          <div className="card" style={{ padding: '0.6rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Outbound Aggregates</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
+              {detail.outbound_flows ?? 0}
             </div>
           </div>
-          <div className="card" style={{ padding: '0.75rem' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Inbound Flows</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              {detail.inbound_flows}
+          <div className="card" style={{ padding: '0.6rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Inbound Aggregates</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
+              {detail.inbound_flows ?? 0}
+            </div>
+          </div>
+          <div className="card" style={{ padding: '0.6rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Outbound Peers</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)' }}>
+              {detail.distinct_outbound_peers ?? 0}
+            </div>
+          </div>
+          <div className="card" style={{ padding: '0.6rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Inbound Peers</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--accent-amber)', fontFamily: 'var(--font-family-mono)' }}>
+              {detail.distinct_inbound_peers ?? 0}
+            </div>
+          </div>
+          <div className="card" style={{ padding: '0.6rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Distinct Dst Ports</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--accent-emerald)', fontFamily: 'var(--font-family-mono)' }}>
+              {detail.distinct_destination_ports ?? 0}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Traffic Volume & Time Metrics */}
+      {detail.traffic_metrics_mode === 'basic' ? (
+        <div className="info-banner" style={{ fontSize: '0.8rem', padding: '0.6rem 0.75rem' }}>
+          Detailed packet/frame-byte/time metrics are unavailable for basic traffic.
+        </div>
+      ) : detail.traffic_metrics_mode === 'enriched' || detail.traffic_metrics_mode === 'mixed' ? (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+              Traffic Volume & Time
+            </h4>
+            {detail.traffic_metrics_mode === 'mixed' && (
+              <span style={{ fontSize: '0.7rem', color: 'var(--accent-amber)', fontStyle: 'italic' }}>partial</span>
+            )}
+          </div>
+
+          {detail.traffic_metrics_mode === 'mixed' && (
+            <div className="info-banner" style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem', marginBottom: '0.5rem' }}>
+              Measured values cover enriched communication aggregates only.
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+            <div className="card" style={{ padding: '0.6rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Bytes Sent</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)' }}>
+                {formatObservedBytes(detail.observed_bytes_sent)}
+              </div>
+            </div>
+            <div className="card" style={{ padding: '0.6rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Bytes Received</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
+                {formatObservedBytes(detail.observed_bytes_received)}
+              </div>
+            </div>
+            <div className="card" style={{ padding: '0.6rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Packets Sent</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
+                {formatObservedPackets(detail.observed_packets_sent)}
+              </div>
+            </div>
+            <div className="card" style={{ padding: '0.6rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Packets Received</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
+                {formatObservedPackets(detail.observed_packets_received)}
+              </div>
+            </div>
+          </div>
+
+          {(detail.first_observed != null || detail.last_observed != null) && (
+            <div className="card" style={{ padding: '0.6rem', marginTop: '0.6rem', fontSize: '0.75rem', fontFamily: 'var(--font-family-mono)' }}>
+              <div style={{ color: 'var(--text-muted)' }}>First Seen: {formatEpochSeconds(detail.first_observed)}</div>
+              <div style={{ color: 'var(--text-muted)', marginTop: '0.15rem' }}>Last Seen: {formatEpochSeconds(detail.last_observed)}</div>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {/* Security Alert Context */}
       <div>

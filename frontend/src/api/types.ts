@@ -16,6 +16,9 @@ export interface ReadyResponse {
   database: string;
 }
 
+// Traffic metrics mode
+export type TrafficMetricsMode = 'none' | 'basic' | 'enriched' | 'mixed';
+
 // Network & topology
 export interface IPAddressResponse {
   address: string;
@@ -28,6 +31,16 @@ export interface IPDetailResponse {
   inbound_flows: number;
   alerts_originated: number;
   alerts_targeted: number;
+  traffic_metrics_mode: TrafficMetricsMode;
+  distinct_outbound_peers: number;
+  distinct_inbound_peers: number;
+  distinct_destination_ports: number;
+  observed_packets_sent: number | null;
+  observed_packets_received: number | null;
+  observed_bytes_sent: number | null;
+  observed_bytes_received: number | null;
+  first_observed: number | null;
+  last_observed: number | null;
 }
 
 export interface PeerResponse {
@@ -44,6 +57,70 @@ export interface CommunicationResponse {
   source_ip: string;
   target_ip: string;
   protocol: string;
+  flow_key: string | null;
+  src_port: number | null;
+  dst_port: number | null;
+  observed_packet_count: number | null;
+  observed_bytes: number | null;
+  first_seen: number | null;
+  last_seen: number | null;
+  observed_window_seconds: number | null;
+}
+
+// Traffic analytics (Phase 7C)
+export interface ProtocolDistributionItem {
+  protocol: string;
+  communication_aggregate_count: number;
+  observed_packet_count: number | null;
+  observed_bytes: number | null;
+}
+
+export interface DestinationPortDistributionItem {
+  dst_port: number;
+  communication_aggregate_count: number;
+  observed_packet_count: number | null;
+  observed_bytes: number | null;
+}
+
+export interface FanOutItem {
+  address: string;
+  distinct_destination_ips: number;
+}
+
+export interface FanInItem {
+  address: string;
+  distinct_source_ips: number;
+}
+
+export interface TrafficAnalyticsSummaryResponse {
+  traffic_metrics_mode: TrafficMetricsMode;
+  total_communication_aggregates: number;
+  enriched_communication_aggregates: number;
+  basic_communication_aggregates: number;
+  total_observed_packets: number | null;
+  total_observed_bytes: number | null;
+  first_observed: number | null;
+  last_observed: number | null;
+  protocol_distribution: ProtocolDistributionItem[];
+  destination_port_distribution: DestinationPortDistributionItem[];
+  top_fan_out: FanOutItem[];
+  top_fan_in: FanInItem[];
+}
+
+export interface EndpointAnalyticsResponse {
+  address: string;
+  outbound_communication_aggregates: number;
+  inbound_communication_aggregates: number;
+  distinct_outbound_peers: number;
+  distinct_inbound_peers: number;
+  distinct_destination_ports: number;
+  observed_packets_sent: number | null;
+  observed_packets_received: number | null;
+  observed_bytes_sent: number | null;
+  observed_bytes_received: number | null;
+  first_observed: number | null;
+  last_observed: number | null;
+  traffic_metrics_mode: TrafficMetricsMode;
 }
 
 // Security alerts & correlation
@@ -65,6 +142,9 @@ export interface TrafficAlertCorrelationResponse {
   source_ip: string;
   target_ip: string;
   traffic_protocol: string;
+  traffic_flow_key: string | null;
+  traffic_src_port: number | null;
+  traffic_dst_port: number | null;
   fact_key: string;
   sid: number | null;
   message: string | null;
@@ -84,6 +164,14 @@ export interface GraphEdgeResponse {
   target: string;
   type: 'COMMUNICATED_TO' | 'OBSERVED_WITH';
   protocol: string | null;
+  flow_key: string | null;
+  src_port: number | null;
+  dst_port: number | null;
+  observed_packet_count: number | null;
+  observed_bytes: number | null;
+  first_seen: number | null;
+  last_seen: number | null;
+  observed_window_seconds: number | null;
 }
 
 export interface GraphNeighborhoodResponse {

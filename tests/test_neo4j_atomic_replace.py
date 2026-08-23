@@ -47,7 +47,7 @@ def live_driver():
 
 
 def test_live_traffic_only_replacement(live_driver):
-    """replace_workspace_data with traffic-only removes prior alerts and populates traffic graph."""
+    """replace_workspace_data with traffic-only removes prior alerts and populates traffic graph with metrics."""
     ensure_schema(live_driver)
     repo = Neo4jRepository(live_driver, batch_size=50)
     read_repo = Neo4jReadRepository(live_driver)
@@ -60,10 +60,38 @@ def test_live_traffic_only_replacement(live_driver):
     alerts_items, alerts_total = read_repo.list_alert_facts()
     assert alerts_total >= 1
 
-    # 2. Replace with traffic-only data
+    # 2. Replace with enriched traffic-only data
     traffic_records = [
-        TrafficRecord("00:11:22:33:44:01", "00:11:22:33:44:02", "198.51.100.10", "198.51.100.20", "TCP"),
-        TrafficRecord("00:11:22:33:44:01", "00:11:22:33:44:03", "198.51.100.10", "198.51.100.30", "DNS"),
+        TrafficRecord(
+            eth_src_resolved="00:11:22:33:44:01",
+            eth_dst_resolved="00:11:22:33:44:02",
+            ip_src="198.51.100.10",
+            ip_dst="198.51.100.20",
+            protocol="TCP",
+            src_port=50000,
+            dst_port=443,
+            observed_packet_count=12,
+            observed_bytes=3600,
+            first_seen=100.0,
+            last_seen=110.0,
+            observed_window_seconds=10.0,
+            observed_l2_pairs=(("00:11:22:33:44:01", "00:11:22:33:44:02"),),
+        ),
+        TrafficRecord(
+            eth_src_resolved="00:11:22:33:44:01",
+            eth_dst_resolved="00:11:22:33:44:03",
+            ip_src="198.51.100.10",
+            ip_dst="198.51.100.30",
+            protocol="DNS",
+            src_port=50001,
+            dst_port=53,
+            observed_packet_count=2,
+            observed_bytes=160,
+            first_seen=105.0,
+            last_seen=105.5,
+            observed_window_seconds=0.5,
+            observed_l2_pairs=(("00:11:22:33:44:01", "00:11:22:33:44:03"),),
+        ),
     ]
     p_traffic, p_alerts = repo.replace_workspace_data(traffic_records=traffic_records, alert_records=None)
     assert p_traffic == 2
@@ -73,11 +101,23 @@ def test_live_traffic_only_replacement(live_driver):
     _, alerts_total_after = read_repo.list_alert_facts()
     assert alerts_total_after == 0
 
-    # Verify new traffic topology exists
+    # Verify new traffic topology and relationship metrics exist
     ips, total_ips = read_repo.list_ips()
     ip_addrs = [x["address"] for x in ips]
     assert "198.51.100.10" in ip_addrs
     assert "198.51.100.20" in ip_addrs
+
+    with live_driver.session() as session:
+        rel = session.run(
+            "MATCH (src:IPAddress {address: '198.51.100.10'})-[r:COMMUNICATED_TO {flow_key: $key}]->(dst:IPAddress {address: '198.51.100.20'}) "
+            "RETURN r.observed_packet_count AS pkts, r.observed_bytes AS bytes, r.src_port AS sp, r.dst_port AS dp",
+            key=traffic_records[0].flow_key,
+        ).single()
+        assert rel is not None
+        assert rel["pkts"] == 12
+        assert rel["bytes"] == 3600
+        assert rel["sp"] == 50000
+        assert rel["dp"] == 443
 
 
 def test_live_alerts_only_replacement(live_driver):
@@ -113,7 +153,21 @@ def test_live_combined_replacement(live_driver):
     read_repo = Neo4jReadRepository(live_driver)
 
     traffic_records = [
-        TrafficRecord("00:aa:bb:cc:dd:01", "00:aa:bb:cc:dd:02", "198.51.100.70", "198.51.100.80", "TCP"),
+        TrafficRecord(
+            eth_src_resolved="00:aa:bb:cc:dd:01",
+            eth_dst_resolved="00:aa:bb:cc:dd:02",
+            ip_src="198.51.100.70",
+            ip_dst="198.51.100.80",
+            protocol="TCP",
+            src_port=54321,
+            dst_port=80,
+            observed_packet_count=10,
+            observed_bytes=1500,
+            first_seen=100.0,
+            last_seen=105.0,
+            observed_window_seconds=5.0,
+            observed_l2_pairs=(("00:aa:bb:cc:dd:01", "00:aa:bb:cc:dd:02"),),
+        ),
     ]
     alert_records = [
         AlertRecord("198.51.100.70", "198.51.100.80", sid=4001, message="Correlated Exploit", priority=1, protocol="TCP"),
@@ -136,10 +190,41 @@ def test_live_transaction_rollback_preserves_previous_workspace(live_driver, mon
     repo = Neo4jRepository(live_driver, batch_size=50)
     read_repo = Neo4jReadRepository(live_driver)
 
-    # 1. Establish known baseline workspace (traffic + alerts)
+    # 1. Establish known baseline workspace (enriched traffic + alerts + multiple L2 pairs)
     baseline_traffic = [
-        TrafficRecord("00:00:00:00:00:01", "00:00:00:00:00:02", "198.51.100.91", "198.51.100.92", "TCP"),
-        TrafficRecord("00:00:00:00:00:01", "00:00:00:00:00:03", "198.51.100.91", "198.51.100.93", "UDP"),
+        TrafficRecord(
+            eth_src_resolved="00:00:00:00:00:01",
+            eth_dst_resolved="00:00:00:00:00:02",
+            ip_src="198.51.100.91",
+            ip_dst="198.51.100.92",
+            protocol="TCP",
+            src_port=50000,
+            dst_port=443,
+            observed_packet_count=20,
+            observed_bytes=5000,
+            first_seen=100.0,
+            last_seen=120.0,
+            observed_window_seconds=20.0,
+            observed_l2_pairs=(
+                ("00:00:00:00:00:01", "00:00:00:00:00:02"),
+                ("00:00:00:00:00:05", "00:00:00:00:00:02"),
+            ),
+        ),
+        TrafficRecord(
+            eth_src_resolved="00:00:00:00:00:01",
+            eth_dst_resolved="00:00:00:00:00:03",
+            ip_src="198.51.100.91",
+            ip_dst="198.51.100.93",
+            protocol="UDP",
+            src_port=50001,
+            dst_port=53,
+            observed_packet_count=4,
+            observed_bytes=400,
+            first_seen=105.0,
+            last_seen=106.0,
+            observed_window_seconds=1.0,
+            observed_l2_pairs=(("00:00:00:00:00:01", "00:00:00:00:00:03"),),
+        ),
     ]
     baseline_alerts = [
         AlertRecord("198.51.100.91", "198.51.100.92", sid=9001, message="Baseline Alert", priority=1, protocol="TCP"),
@@ -165,13 +250,22 @@ def test_live_transaction_rollback_preserves_previous_workspace(live_driver, mon
     assert baseline_detail["outbound_flows"] == 2
     assert baseline_detail["alerts_originated"] == 1
 
+    with live_driver.session() as session:
+        rel_snapshot = session.run(
+            "MATCH (src:IPAddress {address: '198.51.100.91'})-[r:COMMUNICATED_TO {flow_key: $key}]->(dst:IPAddress {address: '198.51.100.92'}) "
+            "RETURN r.observed_packet_count AS pkts, r.observed_bytes AS bytes, r.src_port AS sp, r.dst_port AS dp",
+            key=baseline_traffic[0].flow_key,
+        ).single()
+        assert rel_snapshot is not None
+        assert rel_snapshot["pkts"] == 20
+        assert rel_snapshot["bytes"] == 5000
+
     # 3. Prepare replacement traffic records
     replacement_traffic = [
         TrafficRecord("00:ff:ff:ff:ff:01", "00:ff:ff:ff:ff:02", "198.51.100.201", "198.51.100.202", "TCP"),
     ]
 
     # 4. Force replace_workspace_data() to fail AFTER cleanup has executed inside the managed transaction
-    # We monkeypatch CYPHER_WRITE_TRAFFIC_BATCH with invalid Cypher syntax.
     monkeypatch.setattr(
         "src.graph.repository.CYPHER_WRITE_TRAFFIC_BATCH",
         "INVALID CYPHER SYNTAX THAT FAILS ON WRITE EXECUTION",
@@ -201,3 +295,14 @@ def test_live_transaction_rollback_preserves_previous_workspace(live_driver, mon
     assert post_detail["alerts_originated"] == 1
     # Ensure replacement data was NOT persisted
     assert "198.51.100.201" not in post_ip_set
+
+    # Verify relationship properties survived exactly intact
+    with live_driver.session() as session:
+        rel_post = session.run(
+            "MATCH (src:IPAddress {address: '198.51.100.91'})-[r:COMMUNICATED_TO {flow_key: $key}]->(dst:IPAddress {address: '198.51.100.92'}) "
+            "RETURN r.observed_packet_count AS pkts, r.observed_bytes AS bytes, r.src_port AS sp, r.dst_port AS dp",
+            key=baseline_traffic[0].flow_key,
+        ).single()
+        assert rel_post is not None
+        assert rel_post["pkts"] == 20
+        assert rel_post["bytes"] == 5000

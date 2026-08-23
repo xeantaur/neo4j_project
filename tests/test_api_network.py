@@ -177,21 +177,138 @@ def test_list_communications_filtering(client_and_mock_repo):
     """Verify GET /api/v1/network/communications with filters."""
     client, mock_repo = client_and_mock_repo
     mock_repo.list_communications.return_value = (
-        [{"source_ip": "192.168.1.10", "target_ip": "192.168.1.20", "protocol": "TCP"}],
+        [
+            {
+                "source_ip": "192.168.1.10",
+                "target_ip": "192.168.1.20",
+                "protocol": "TCP",
+                "flow_key": "a" * 64,
+                "src_port": 50000,
+                "dst_port": 443,
+                "observed_packet_count": 10,
+                "observed_bytes": 2500,
+                "first_seen": 100.0,
+                "last_seen": 105.0,
+                "observed_window_seconds": 5.0,
+            }
+        ],
         1,
     )
 
     response = client.get(
-        "/api/v1/network/communications?source_ip=192.168.1.10&target_ip=192.168.1.20&protocol=TCP"
+        "/api/v1/network/communications?source_ip=192.168.1.10&target_ip=192.168.1.20&protocol=TCP&src_port=50000&dst_port=443&sort_by=observed_bytes"
     )
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
     assert data["items"][0]["protocol"] == "TCP"
+    assert data["items"][0]["flow_key"] == "a" * 64
+    assert data["items"][0]["src_port"] == 50000
+    assert data["items"][0]["dst_port"] == 443
+    assert data["items"][0]["observed_bytes"] == 2500
     mock_repo.list_communications.assert_called_once_with(
         source_ip="192.168.1.10",
         target_ip="192.168.1.20",
         protocol="TCP",
+        src_port=50000,
+        dst_port=443,
+        sort_by="observed_bytes",
         limit=50,
         offset=0,
     )
+
+
+def test_list_communications_validation_bounds(client_and_mock_repo):
+    """Verify invalid port bounds and sort criteria return 422."""
+    client, _ = client_and_mock_repo
+
+    # src_port > 65535
+    assert client.get("/api/v1/network/communications?src_port=70000").status_code == 422
+    # dst_port < 1
+    assert client.get("/api/v1/network/communications?dst_port=0").status_code == 422
+    # Invalid sort_by
+    assert client.get("/api/v1/network/communications?sort_by=random_field").status_code == 422
+
+
+def test_traffic_analytics_summary_endpoint(client_and_mock_repo):
+    """Verify GET /api/v1/network/analytics/summary returns TrafficAnalyticsSummaryResponse."""
+    client, mock_repo = client_and_mock_repo
+    mock_repo.get_traffic_analytics_summary.return_value = {
+        "traffic_metrics_mode": "enriched",
+        "total_communication_aggregates": 10,
+        "enriched_communication_aggregates": 10,
+        "basic_communication_aggregates": 0,
+        "total_observed_packets": 250,
+        "total_observed_bytes": 65000,
+        "first_observed": 1000.0,
+        "last_observed": 1050.0,
+        "protocol_distribution": [
+            {"protocol": "TLS", "communication_aggregate_count": 8, "observed_packet_count": 200, "observed_bytes": 55000},
+            {"protocol": "DNS", "communication_aggregate_count": 2, "observed_packet_count": 50, "observed_bytes": 10000},
+        ],
+        "destination_port_distribution": [
+            {"dst_port": 443, "communication_aggregate_count": 8, "observed_packet_count": 200, "observed_bytes": 55000},
+            {"dst_port": 53, "communication_aggregate_count": 2, "observed_packet_count": 50, "observed_bytes": 10000},
+        ],
+        "top_fan_out": [{"address": "10.0.0.1", "distinct_destination_ips": 5}],
+        "top_fan_in": [{"address": "10.0.0.2", "distinct_source_ips": 4}],
+    }
+
+    response = client.get("/api/v1/network/analytics/summary")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["traffic_metrics_mode"] == "enriched"
+    assert data["total_communication_aggregates"] == 10
+    assert data["total_observed_packets"] == 250
+    assert data["total_observed_bytes"] == 65000
+    assert len(data["protocol_distribution"]) == 2
+    assert len(data["destination_port_distribution"]) == 2
+    assert len(data["top_fan_out"]) == 1
+    assert len(data["top_fan_in"]) == 1
+
+
+def test_endpoints_analytics_endpoint(client_and_mock_repo):
+    """Verify GET /api/v1/network/analytics/endpoints returns PaginatedResponse[EndpointAnalyticsResponse]."""
+    client, mock_repo = client_and_mock_repo
+    mock_repo.get_endpoints_analytics.return_value = (
+        [
+            {
+                "address": "10.0.0.1",
+                "outbound_communication_aggregates": 5,
+                "inbound_communication_aggregates": 1,
+                "distinct_outbound_peers": 4,
+                "distinct_inbound_peers": 1,
+                "distinct_destination_ports": 2,
+                "observed_packets_sent": 150,
+                "observed_packets_received": 10,
+                "observed_bytes_sent": 45000,
+                "observed_bytes_received": 1000,
+                "first_observed": 100.0,
+                "last_observed": 120.0,
+                "traffic_metrics_mode": "enriched",
+            }
+        ],
+        1,
+    )
+
+    response = client.get("/api/v1/network/analytics/endpoints?sort_by=observed_bytes_sent&limit=10&offset=0")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["limit"] == 10
+    assert data["offset"] == 0
+    assert data["items"][0]["address"] == "10.0.0.1"
+    assert data["items"][0]["observed_bytes_sent"] == 45000
+    assert data["items"][0]["traffic_metrics_mode"] == "enriched"
+    mock_repo.get_endpoints_analytics.assert_called_once_with(
+        sort_by="observed_bytes_sent",
+        limit=10,
+        offset=0,
+    )
+
+
+def test_endpoints_analytics_invalid_sort(client_and_mock_repo):
+    """Verify invalid sort_by on endpoints analytics returns 422."""
+    client, _ = client_and_mock_repo
+    response = client.get("/api/v1/network/analytics/endpoints?sort_by=non_existent_column")
+    assert response.status_code == 422

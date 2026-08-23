@@ -11,6 +11,8 @@ from src.api.models import (
     PeerResponse,
     Layer2IdentifierResponse,
     CommunicationResponse,
+    TrafficAnalyticsSummaryResponse,
+    EndpointAnalyticsResponse,
     PaginatedResponse,
 )
 from src.api.dependencies import get_read_repository, validate_canonical_ip
@@ -18,6 +20,46 @@ from src.graph.read_repository import Neo4jReadRepository
 
 router = APIRouter(prefix="/api/v1/network", tags=["Network"])
 
+
+# --- Network Analytics Endpoints (Phase 7C) ---
+
+@router.get("/analytics/summary", response_model=TrafficAnalyticsSummaryResponse)
+def get_traffic_analytics_summary(
+    repo: Neo4jReadRepository = Depends(get_read_repository),
+) -> TrafficAnalyticsSummaryResponse:
+    """Retrieve overall traffic analytics summary, metric completeness mode, and distribution rankings."""
+    data = repo.get_traffic_analytics_summary()
+    return TrafficAnalyticsSummaryResponse(**data)
+
+
+@router.get("/analytics/endpoints", response_model=PaginatedResponse[EndpointAnalyticsResponse])
+def get_endpoints_analytics(
+    sort_by: Literal[
+        "fan_out",
+        "fan_in",
+        "observed_bytes_sent",
+        "observed_bytes_received",
+        "observed_packets_sent",
+        "observed_packets_received",
+    ] = Query(
+        default="fan_out",
+        description="Factual sorting criteria for endpoint ranking",
+    ),
+    limit: int = Query(default=50, ge=1, le=200, description="Max items per page"),
+    offset: int = Query(default=0, ge=0, description="Offset starting index"),
+    repo: Neo4jReadRepository = Depends(get_read_repository),
+) -> PaginatedResponse[EndpointAnalyticsResponse]:
+    """Retrieve a paginated, ranked list of endpoint traffic and topology metrics."""
+    items, total = repo.get_endpoints_analytics(sort_by=sort_by, limit=limit, offset=offset)
+    return PaginatedResponse[EndpointAnalyticsResponse](
+        items=[EndpointAnalyticsResponse(**item) for item in items],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+# --- Network Topology & Context Endpoints ---
 
 @router.get("/ips", response_model=PaginatedResponse[IPAddressResponse])
 def list_ip_addresses(
@@ -124,6 +166,12 @@ def list_communications(
     source_ip: Optional[str] = Query(default=None, description="Filter by source IP address"),
     target_ip: Optional[str] = Query(default=None, description="Filter by destination IP address"),
     protocol: Optional[str] = Query(default=None, description="Filter by observed protocol (e.g., TCP, UDP, HTTP)"),
+    src_port: Optional[int] = Query(default=None, ge=1, le=65535, description="Filter by source port number (1-65535)"),
+    dst_port: Optional[int] = Query(default=None, ge=1, le=65535, description="Filter by destination port number (1-65535)"),
+    sort_by: Literal["identity", "observed_bytes", "observed_packets", "first_seen"] = Query(
+        default="identity",
+        description="Sorting criteria for communications",
+    ),
     limit: int = Query(default=50, ge=1, le=200, description="Max items per page"),
     offset: int = Query(default=0, ge=0, description="Offset starting index"),
     repo: Neo4jReadRepository = Depends(get_read_repository),
@@ -136,6 +184,9 @@ def list_communications(
         source_ip=can_src,
         target_ip=can_dst,
         protocol=protocol,
+        src_port=src_port,
+        dst_port=dst_port,
+        sort_by=sort_by,
         limit=limit,
         offset=offset,
     )

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { NetworkExplorerPage } from '../pages/NetworkExplorerPage';
+import type { CytoscapeEdgeData } from '../components/graph/transformGraphData';
 
 // Mock CytoscapeCanvas to avoid canvas rendering dependencies in jsdom
 vi.mock('../components/graph/CytoscapeCanvas', async () => {
@@ -12,9 +13,25 @@ vi.mock('../components/graph/CytoscapeCanvas', async () => {
     value: string;
   }
 
+  interface MockEdge {
+    source: string;
+    target: string;
+    type: 'COMMUNICATED_TO' | 'OBSERVED_WITH';
+    protocol: string | null;
+    flow_key?: string | null;
+    src_port?: number | null;
+    dst_port?: number | null;
+    observed_packet_count?: number | null;
+    observed_bytes?: number | null;
+    first_seen?: number | null;
+    last_seen?: number | null;
+    observed_window_seconds?: number | null;
+  }
+
   interface MockProps {
-    data: { nodes: MockNode[] };
+    data: { nodes: MockNode[]; edges: MockEdge[] };
     onNodeSelect: (node: MockNode | null) => void;
+    onEdgeSelect?: (edge: CytoscapeEdgeData | null) => void;
   }
 
   const MockCytoscape = React.forwardRef<unknown, MockProps>((props, ref) => {
@@ -37,7 +54,39 @@ vi.mock('../components/graph/CytoscapeCanvas', async () => {
             Select {n.type} {n.value}
           </button>
         ))}
-        <button data-testid="mock-bg-click" onClick={() => props.onNodeSelect(null)}>
+        {props.data.edges.map((e, idx) => (
+          <button
+            key={`edge-${idx}`}
+            data-testid={`mock-edge-${idx}`}
+            onClick={() =>
+              props.onEdgeSelect?.({
+                id: `edge:${e.source}|${e.target}|${e.type}|${e.flow_key || e.protocol || 'none'}`,
+                source: e.source,
+                target: e.target,
+                type: e.type,
+                protocol: e.protocol,
+                flow_key: e.flow_key ?? 'a'.repeat(64),
+                src_port: e.src_port ?? 54321,
+                dst_port: e.dst_port ?? 443,
+                observed_packet_count: e.observed_packet_count ?? 120,
+                observed_bytes: e.observed_bytes ?? 65536,
+                first_seen: e.first_seen ?? 1718000000.0,
+                last_seen: e.last_seen ?? 1718000500.0,
+                observed_window_seconds: e.observed_window_seconds ?? 500.0,
+                label: `${e.protocol || 'TCP'} · :${e.dst_port ?? 443}`,
+              })
+            }
+          >
+            Select Edge {e.type} {e.protocol}
+          </button>
+        ))}
+        <button
+          data-testid="mock-bg-click"
+          onClick={() => {
+            props.onNodeSelect(null);
+            props.onEdgeSelect?.(null);
+          }}
+        >
           Deselect
         </button>
       </div>
@@ -68,7 +117,20 @@ describe('NetworkExplorerPage Behavioral Tests', () => {
       { id: 'l2:00:50:56:c0:00:08', type: 'Layer2Identifier' as const, value: '00:50:56:c0:00:08' },
     ],
     edges: [
-      { source: 'ip:192.168.1.100', target: 'ip:192.168.1.1', type: 'COMMUNICATED_TO' as const, protocol: 'TCP' },
+      {
+        source: 'ip:192.168.1.100',
+        target: 'ip:192.168.1.1',
+        type: 'COMMUNICATED_TO' as const,
+        protocol: 'TCP',
+        flow_key: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+        src_port: 54321,
+        dst_port: 443,
+        observed_packet_count: 120,
+        observed_bytes: 65536,
+        first_seen: 1718000000.0,
+        last_seen: 1718000500.0,
+        observed_window_seconds: 500.0,
+      },
       { source: 'ip:192.168.1.100', target: 'l2:00:50:56:c0:00:08', type: 'OBSERVED_WITH' as const, protocol: null },
     ],
   };
@@ -91,6 +153,16 @@ describe('NetworkExplorerPage Behavioral Tests', () => {
     inbound_flows: 4,
     alerts_originated: 1,
     alerts_targeted: 0,
+    traffic_metrics_mode: 'enriched',
+    distinct_outbound_peers: 5,
+    distinct_inbound_peers: 3,
+    distinct_destination_ports: 2,
+    observed_packets_sent: 500,
+    observed_packets_received: 200,
+    observed_bytes_sent: 45000,
+    observed_bytes_received: 12000,
+    first_observed: 1718000000.0,
+    last_observed: 1718000500.0,
   };
 
   const mockPeers = {
@@ -301,5 +373,38 @@ describe('NetworkExplorerPage Behavioral Tests', () => {
     // Switch to breadthfirst
     fireEvent.change(layoutSelect, { target: { value: 'breadthfirst' } });
     expect(layoutSelect.value).toBe('breadthfirst');
+  });
+
+  it('F. Communication Edge Selection: opens drawer with CommunicationEdgePanel displaying ports, timestamps, volume, and flow key', async () => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/api/v1/graph/neighborhood/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockNeighborhood) });
+      }
+      if (url.includes('/api/v1/network/ips?')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIpList) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    }) as unknown as typeof fetch;
+
+    render(<NetworkExplorerPage initialCenterIp="192.168.1.100" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-node-count')).toHaveTextContent('3 nodes');
+    });
+
+    // Click communication edge
+    const commEdgeBtn = screen.getByTestId('mock-edge-0');
+    fireEvent.click(commEdgeBtn);
+
+    // Verify Communication Edge drawer opened
+    await waitFor(() => {
+      expect(screen.getByText('Observed Communication Aggregate')).toBeInTheDocument();
+      expect(screen.getByText('Protocol & Transport Ports')).toBeInTheDocument();
+      expect(screen.getByText('54321')).toBeInTheDocument();
+      expect(screen.getByText('443')).toBeInTheDocument();
+      expect(screen.getByText('64.00 KiB')).toBeInTheDocument();
+      expect(screen.getByText('120')).toBeInTheDocument();
+      expect(screen.getByText(/abcdef1234567890/i)).toBeInTheDocument();
+    });
   });
 });
