@@ -108,3 +108,46 @@ export interface PaginatedResponse<T> {
   limit: number;
   offset: number;
 }
+
+// Data import & workspace replacement (Phase 6.5)
+export interface ImportStatusResponse {
+  enabled: boolean;
+  max_file_size_bytes: number;
+  max_file_size_mb: number;
+}
+
+export interface FileValidationResult {
+  provided: boolean;
+  filename: string | null;
+  total_raw_records: number | null;
+  valid_records: number | null;
+  skipped_records: number | null;
+  duplicate_records: number | null;
+  warning_counts: Record<string, number>;
+  sample_errors: string[];
+}
+
+export interface ImportValidationResponse {
+  valid: boolean;
+  can_import: boolean;
+  traffic: FileValidationResult;
+  alerts: FileValidationResult;
+  message: string;
+}
+
+export interface ImportCapabilities {
+  network_topology: boolean;
+  ip_investigation: boolean;
+  communication_paths: boolean;
+  alert_facts: boolean;
+  traffic_alert_correlations: boolean;
+}
+
+export interface ImportResultResponse {
+  success: boolean;
+  workspace_replaced: boolean;
+  traffic_records_persisted: number;
+  alert_facts_persisted: number;
+  capabilities: ImportCapabilities;
+  message: string;
+}
