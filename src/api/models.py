@@ -37,6 +37,46 @@ class IPDetailResponse(BaseModel):
     inbound_flows: int = Field(description="Count of incoming Layer 3 communications")
     alerts_originated: int = Field(description="Count of security alerts where this IP was source")
     alerts_targeted: int = Field(description="Count of security alerts targeting this IP")
+    traffic_metrics_mode: Literal["none", "basic", "enriched", "mixed"] = Field(
+        default="none",
+        description="Measurement availability mode for traffic communications incident to this IP",
+    )
+    distinct_outbound_peers: int = Field(
+        default=0,
+        description="Count of distinct destination IP peers contacted by this IP (fan-out)",
+    )
+    distinct_inbound_peers: int = Field(
+        default=0,
+        description="Count of distinct source IP peers contacting this IP (fan-in)",
+    )
+    distinct_destination_ports: int = Field(
+        default=0,
+        description="Count of distinct destination transport ports contacted by this IP",
+    )
+    observed_packets_sent: Optional[int] = Field(
+        default=None,
+        description="Total packets observed sent from this IP across enriched communications",
+    )
+    observed_packets_received: Optional[int] = Field(
+        default=None,
+        description="Total packets observed received by this IP across enriched communications",
+    )
+    observed_bytes_sent: Optional[int] = Field(
+        default=None,
+        description="Total bytes observed sent from this IP across enriched communications",
+    )
+    observed_bytes_received: Optional[int] = Field(
+        default=None,
+        description="Total bytes observed received by this IP across enriched communications",
+    )
+    first_observed: Optional[float] = Field(
+        default=None,
+        description="Earliest observation timestamp (seconds since epoch) across enriched incident communications",
+    )
+    last_observed: Optional[float] = Field(
+        default=None,
+        description="Latest observation timestamp (seconds since epoch) across enriched incident communications",
+    )
 
 
 class PeerResponse(BaseModel):
@@ -56,6 +96,111 @@ class CommunicationResponse(BaseModel):
     source_ip: str = Field(description="Source IP address")
     target_ip: str = Field(description="Destination IP address")
     protocol: str = Field(description="Observed protocol value")
+    flow_key: Optional[str] = Field(default=None, description="Deterministic 64-character SHA-256 flow identity key")
+    src_port: Optional[int] = Field(default=None, description="Observed source transport port number")
+    dst_port: Optional[int] = Field(default=None, description="Observed destination transport port number")
+    observed_packet_count: Optional[int] = Field(default=None, description="Count of packets observed for this communication aggregate")
+    observed_bytes: Optional[int] = Field(default=None, description="Total byte volume observed for this communication aggregate")
+    first_seen: Optional[float] = Field(default=None, description="Earliest frame timestamp (seconds since epoch)")
+    last_seen: Optional[float] = Field(default=None, description="Latest frame timestamp (seconds since epoch)")
+    observed_window_seconds: Optional[float] = Field(default=None, description="Duration in seconds between first and last observed frames")
+
+
+# --- Traffic Analytics Schemas (Phase 7C) ---
+
+class ProtocolDistributionItem(BaseModel):
+    """Aggregated metrics for an observed network protocol."""
+    protocol: str = Field(description="Normalized protocol identifier")
+    communication_aggregate_count: int = Field(description="Number of communication relationships using this protocol")
+    observed_packet_count: Optional[int] = Field(default=None, description="Total observed packets (null if no enriched metrics)")
+    observed_bytes: Optional[int] = Field(default=None, description="Total observed bytes (null if no enriched metrics)")
+
+
+class DestinationPortDistributionItem(BaseModel):
+    """Aggregated metrics for a destination transport port."""
+    dst_port: int = Field(description="Destination port number")
+    communication_aggregate_count: int = Field(description="Number of communication relationships targeting this port")
+    observed_packet_count: Optional[int] = Field(default=None, description="Total observed packets (null if no enriched metrics)")
+    observed_bytes: Optional[int] = Field(default=None, description="Total observed bytes (null if no enriched metrics)")
+
+
+class FanOutItem(BaseModel):
+    """Ranked fan-out metric for a source IP address."""
+    address: str = Field(description="Source IP address")
+    distinct_destination_ips: int = Field(description="Count of distinct destination IPs contacted")
+
+
+class FanInItem(BaseModel):
+    """Ranked fan-in metric for a destination IP address."""
+    address: str = Field(description="Destination IP address")
+    distinct_source_ips: int = Field(description="Count of distinct source IPs contacting this address")
+
+
+class TrafficAnalyticsSummaryResponse(BaseModel):
+    """Global traffic analytics summary and factual distribution metrics."""
+    traffic_metrics_mode: Literal["none", "basic", "enriched", "mixed"] = Field(
+        description="Factual classification of metric completeness across all persisted traffic aggregates",
+    )
+    total_communication_aggregates: int = Field(
+        description="Total count of COMMUNICATED_TO relationships in graph",
+    )
+    enriched_communication_aggregates: int = Field(
+        description="Count of COMMUNICATED_TO relationships containing complete Phase 7 metric attributes",
+    )
+    basic_communication_aggregates: int = Field(
+        description="Count of legacy/basic COMMUNICATED_TO relationships lacking measurement attributes",
+    )
+    total_observed_packets: Optional[int] = Field(
+        default=None,
+        description="Sum of observed packets across enriched aggregates (null if no enriched metrics present)",
+    )
+    total_observed_bytes: Optional[int] = Field(
+        default=None,
+        description="Sum of observed bytes across enriched aggregates (null if no enriched metrics present)",
+    )
+    first_observed: Optional[float] = Field(
+        default=None,
+        description="Earliest frame timestamp across enriched aggregates (null if no enriched metrics present)",
+    )
+    last_observed: Optional[float] = Field(
+        default=None,
+        description="Latest frame timestamp across enriched aggregates (null if no enriched metrics present)",
+    )
+    protocol_distribution: List[ProtocolDistributionItem] = Field(
+        default_factory=list,
+        description="Distribution of communications across observed dissector protocols",
+    )
+    destination_port_distribution: List[DestinationPortDistributionItem] = Field(
+        default_factory=list,
+        description="Top destination transport ports by communication aggregate count",
+    )
+    top_fan_out: List[FanOutItem] = Field(
+        default_factory=list,
+        description="Top source IP addresses ranked by distinct destination IP count",
+    )
+    top_fan_in: List[FanInItem] = Field(
+        default_factory=list,
+        description="Top destination IP addresses ranked by distinct source IP count",
+    )
+
+
+class EndpointAnalyticsResponse(BaseModel):
+    """Factual traffic and topology metrics for an observed IP endpoint."""
+    address: str = Field(description="Canonical IP address")
+    outbound_communication_aggregates: int = Field(description="Count of outgoing COMMUNICATED_TO relationships")
+    inbound_communication_aggregates: int = Field(description="Count of incoming COMMUNICATED_TO relationships")
+    distinct_outbound_peers: int = Field(description="Distinct destination IP addresses contacted (fan-out)")
+    distinct_inbound_peers: int = Field(description="Distinct source IP addresses contacting this IP (fan-in)")
+    distinct_destination_ports: int = Field(description="Distinct destination transport ports contacted")
+    observed_packets_sent: Optional[int] = Field(default=None, description="Observed packets sent across enriched flows")
+    observed_packets_received: Optional[int] = Field(default=None, description="Observed packets received across enriched flows")
+    observed_bytes_sent: Optional[int] = Field(default=None, description="Observed bytes sent across enriched flows")
+    observed_bytes_received: Optional[int] = Field(default=None, description="Observed bytes received across enriched flows")
+    first_observed: Optional[float] = Field(default=None, description="Earliest observation timestamp on enriched incident flows")
+    last_observed: Optional[float] = Field(default=None, description="Latest observation timestamp on enriched incident flows")
+    traffic_metrics_mode: Literal["none", "basic", "enriched", "mixed"] = Field(
+        description="Measurement availability mode for communications incident to this endpoint",
+    )
 
 
 # --- Security Alerts & Correlation Schemas ---
@@ -63,8 +208,8 @@ class CommunicationResponse(BaseModel):
 class AlertFactResponse(BaseModel):
     """Normalized security alert fact model."""
     fact_key: str = Field(description="Deterministic SHA-256 identity key")
-    source_ip: str = Field(description="Attacker / Source IP address")
-    target_ip: str = Field(description="Victim / Target IP address")
+    source_ip: str = Field(description="Source IP address recorded by the alert")
+    target_ip: str = Field(description="Target/destination IP address recorded by the alert")
     sid: Optional[int] = Field(default=None, description="Snort / IDS signature ID")
     gid: Optional[int] = Field(default=None, description="Generator ID")
     rev: Optional[int] = Field(default=None, description="Rule revision")
@@ -80,6 +225,9 @@ class TrafficAlertCorrelationResponse(BaseModel):
     source_ip: str = Field(description="Source IP address")
     target_ip: str = Field(description="Target IP address")
     traffic_protocol: str = Field(description="Observed traffic communication protocol")
+    traffic_flow_key: Optional[str] = Field(default=None, description="Deterministic flow identity key of matching communication")
+    traffic_src_port: Optional[int] = Field(default=None, description="Source port of matching communication")
+    traffic_dst_port: Optional[int] = Field(default=None, description="Destination port of matching communication")
     fact_key: str = Field(description="Deterministic SHA-256 alert fact key")
     sid: Optional[int] = Field(default=None, description="Snort signature ID")
     message: Optional[str] = Field(default=None, description="Alert message description")
@@ -102,6 +250,14 @@ class GraphEdgeResponse(BaseModel):
     target: str = Field(description="Target node ID")
     type: Literal["COMMUNICATED_TO", "OBSERVED_WITH"] = Field(description="Graph relationship type")
     protocol: Optional[str] = Field(default=None, description="Observed protocol on relationship")
+    flow_key: Optional[str] = Field(default=None, description="Deterministic flow identity key for COMMUNICATED_TO")
+    src_port: Optional[int] = Field(default=None, description="Source port number")
+    dst_port: Optional[int] = Field(default=None, description="Destination port number")
+    observed_packet_count: Optional[int] = Field(default=None, description="Count of observed packets")
+    observed_bytes: Optional[int] = Field(default=None, description="Total observed byte volume")
+    first_seen: Optional[float] = Field(default=None, description="Earliest frame timestamp")
+    last_seen: Optional[float] = Field(default=None, description="Latest frame timestamp")
+    observed_window_seconds: Optional[float] = Field(default=None, description="Observed duration in seconds")
 
 
 class GraphNeighborhoodResponse(BaseModel):

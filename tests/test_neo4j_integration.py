@@ -725,3 +725,358 @@ def test_live_legacy_record_null_properties(live_neo4j_driver):
         with live_neo4j_driver.session() as session:
             session.run("MATCH (ip:IPAddress) WHERE ip.address IN ['203.0.113.103', '203.0.113.203'] DETACH DELETE ip").consume()
             session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier IN ['02:00:00:99:03:01', '02:00:00:99:03:02'] DETACH DELETE l2").consume()
+
+
+# ============================================================================
+# Phase 7C Read Repository & Traffic Analytics Live Tests
+# ============================================================================
+
+@pytest.mark.integration
+def test_live_traffic_analytics_summary_and_endpoints(live_neo4j_driver):
+    """Verify live summary and endpoint analytics with enriched, basic, and mixed traffic datasets."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=50)
+    read_repo = Neo4jReadRepository(live_neo4j_driver)
+
+    test_ips = ["198.51.100.101", "198.51.100.102", "198.51.100.201", "198.51.100.202"]
+
+    records = [
+        # Enriched flow 1: 101 -> 201 (port 50001 -> 443, TLS, 10 pkts, 2000 bytes)
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:01:01",
+            eth_dst_resolved="02:00:00:7c:02:01",
+            ip_src="198.51.100.101",
+            ip_dst="198.51.100.201",
+            protocol="TLS",
+            src_port=50001,
+            dst_port=443,
+            observed_packet_count=10,
+            observed_bytes=2000,
+            first_seen=100.0,
+            last_seen=110.0,
+            observed_window_seconds=10.0,
+            observed_l2_pairs=(("02:00:00:7c:01:01", "02:00:00:7c:02:01"),),
+        ),
+        # Enriched flow 2: 101 -> 201 (port 50002 -> 443, TLS, 20 pkts, 4000 bytes)
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:01:01",
+            eth_dst_resolved="02:00:00:7c:02:01",
+            ip_src="198.51.100.101",
+            ip_dst="198.51.100.201",
+            protocol="TLS",
+            src_port=50002,
+            dst_port=443,
+            observed_packet_count=20,
+            observed_bytes=4000,
+            first_seen=105.0,
+            last_seen=115.0,
+            observed_window_seconds=10.0,
+            observed_l2_pairs=(("02:00:00:7c:01:01", "02:00:00:7c:02:01"),),
+        ),
+        # Enriched flow 3: 101 -> 202 (port 50003 -> 80, HTTP, 5 pkts, 1000 bytes)
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:01:01",
+            eth_dst_resolved="02:00:00:7c:02:02",
+            ip_src="198.51.100.101",
+            ip_dst="198.51.100.202",
+            protocol="HTTP",
+            src_port=50003,
+            dst_port=80,
+            observed_packet_count=5,
+            observed_bytes=1000,
+            first_seen=120.0,
+            last_seen=125.0,
+            observed_window_seconds=5.0,
+            observed_l2_pairs=(("02:00:00:7c:01:01", "02:00:00:7c:02:02"),),
+        ),
+        # Legacy/Basic flow 4: 102 -> 201 (DNS, metrics absent)
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:01:02",
+            eth_dst_resolved="02:00:00:7c:02:01",
+            ip_src="198.51.100.102",
+            ip_dst="198.51.100.201",
+            protocol="DNS",
+        ),
+    ]
+
+    try:
+        repo.write_traffic_records(records)
+
+        # 1. Verify Traffic Analytics Summary
+        summary = read_repo.get_traffic_analytics_summary()
+        assert summary["traffic_metrics_mode"] == "mixed"
+        assert summary["total_communication_aggregates"] == 4
+        assert summary["enriched_communication_aggregates"] == 3
+        assert summary["basic_communication_aggregates"] == 1
+        assert summary["total_observed_packets"] == 35  # 10 + 20 + 5
+        assert summary["total_observed_bytes"] == 7000  # 2000 + 4000 + 1000
+        assert summary["first_observed"] == 100.0
+        assert summary["last_observed"] == 125.0
+
+        # Protocol distribution verification
+        protos = {p["protocol"]: p for p in summary["protocol_distribution"]}
+        assert "TLS" in protos
+        assert protos["TLS"]["communication_aggregate_count"] == 2
+        assert protos["TLS"]["observed_packet_count"] == 30
+        assert protos["TLS"]["observed_bytes"] == 6000
+        assert "HTTP" in protos
+        assert protos["HTTP"]["communication_aggregate_count"] == 1
+        assert protos["HTTP"]["observed_bytes"] == 1000
+        assert "DNS" in protos
+        assert protos["DNS"]["communication_aggregate_count"] == 1
+        assert protos["DNS"]["observed_packet_count"] is None  # Basic only -> null
+        assert protos["DNS"]["observed_bytes"] is None
+
+        # Destination port distribution verification
+        ports = {p["dst_port"]: p for p in summary["destination_port_distribution"]}
+        assert 443 in ports
+        assert ports[443]["communication_aggregate_count"] == 2
+        assert ports[443]["observed_bytes"] == 6000
+        assert 80 in ports
+        assert ports[80]["communication_aggregate_count"] == 1
+        assert ports[80]["observed_bytes"] == 1000
+
+        # Fan-out & Fan-in
+        assert summary["top_fan_out"][0]["address"] == "198.51.100.101"
+        assert summary["top_fan_out"][0]["distinct_destination_ips"] == 2
+        assert summary["top_fan_in"][0]["address"] == "198.51.100.201"
+        assert summary["top_fan_in"][0]["distinct_source_ips"] == 2
+
+        # 2. Verify Endpoint Analytics
+        endpoints, total_ep = read_repo.get_endpoints_analytics(sort_by="observed_bytes_sent", limit=10)
+        assert total_ep >= 4
+        ep_map = {e["address"]: e for e in endpoints if e["address"] in test_ips}
+
+        # 101: 3 enriched outbound flows
+        ep_101 = ep_map["198.51.100.101"]
+        assert ep_101["outbound_communication_aggregates"] == 3
+        assert ep_101["distinct_outbound_peers"] == 2
+        assert ep_101["distinct_destination_ports"] == 2
+        assert ep_101["observed_bytes_sent"] == 7000
+        assert ep_101["observed_packets_sent"] == 35
+        assert ep_101["traffic_metrics_mode"] == "enriched"
+
+        # 201: 2 enriched inbound + 1 basic inbound -> mixed
+        ep_201 = ep_map["198.51.100.201"]
+        assert ep_201["inbound_communication_aggregates"] == 3
+        assert ep_201["distinct_inbound_peers"] == 2
+        assert ep_201["observed_bytes_received"] == 6000
+        assert ep_201["observed_packets_received"] == 30
+        assert ep_201["traffic_metrics_mode"] == "mixed"
+
+        # 102: 1 basic outbound flow -> basic
+        ep_102 = ep_map["198.51.100.102"]
+        assert ep_102["outbound_communication_aggregates"] == 1
+        assert ep_102["observed_bytes_sent"] is None
+        assert ep_102["traffic_metrics_mode"] == "basic"
+
+        # 3. Verify IP Detail enrichment
+        detail_101 = read_repo.get_ip_detail("198.51.100.101")
+        assert detail_101 is not None
+        assert detail_101["traffic_metrics_mode"] == "enriched"
+        assert detail_101["distinct_outbound_peers"] == 2
+        assert detail_101["observed_bytes_sent"] == 7000
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN $ips DETACH DELETE ip", ips=test_ips).consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier STARTS WITH '02:00:00:7c:' DETACH DELETE l2").consume()
+
+
+@pytest.mark.integration
+def test_live_communications_filtering_and_sorting(live_neo4j_driver):
+    """Verify live list_communications endpoint sorting and port filtering."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=50)
+    read_repo = Neo4jReadRepository(live_neo4j_driver)
+
+    test_ips = ["198.51.100.111", "198.51.100.222"]
+
+    records = [
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:11:01",
+            eth_dst_resolved="02:00:00:7c:22:01",
+            ip_src="198.51.100.111",
+            ip_dst="198.51.100.222",
+            protocol="TLS",
+            src_port=51001,
+            dst_port=443,
+            observed_packet_count=10,
+            observed_bytes=1000,
+            first_seen=100.0,
+            last_seen=105.0,
+            observed_window_seconds=5.0,
+            observed_l2_pairs=(("02:00:00:7c:11:01", "02:00:00:7c:22:01"),),
+        ),
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:11:01",
+            eth_dst_resolved="02:00:00:7c:22:01",
+            ip_src="198.51.100.111",
+            ip_dst="198.51.100.222",
+            protocol="TLS",
+            src_port=51002,
+            dst_port=443,
+            observed_packet_count=20,
+            observed_bytes=3000,
+            first_seen=102.0,
+            last_seen=108.0,
+            observed_window_seconds=6.0,
+            observed_l2_pairs=(("02:00:00:7c:11:01", "02:00:00:7c:22:01"),),
+        ),
+    ]
+
+    try:
+        repo.write_traffic_records(records)
+
+        # Filter by src_port
+        items_51001, total_1 = read_repo.list_communications(
+            source_ip="198.51.100.111",
+            target_ip="198.51.100.222",
+            src_port=51001,
+        )
+        assert total_1 == 1
+        assert items_51001[0]["src_port"] == 51001
+        assert items_51001[0]["observed_bytes"] == 1000
+
+        # Sort by observed_bytes DESC
+        items_sorted, total_2 = read_repo.list_communications(
+            source_ip="198.51.100.111",
+            target_ip="198.51.100.222",
+            sort_by="observed_bytes",
+        )
+        assert total_2 == 2
+        assert items_sorted[0]["observed_bytes"] == 3000
+        assert items_sorted[1]["observed_bytes"] == 1000
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN $ips DETACH DELETE ip", ips=test_ips).consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier STARTS WITH '02:00:00:7c:11:' OR l2.identifier STARTS WITH '02:00:00:7c:22:' DETACH DELETE l2").consume()
+
+
+@pytest.mark.integration
+def test_live_neighborhood_parallel_edges_preservation(live_neo4j_driver):
+    """Verify get_neighborhood preserves parallel same-protocol COMMUNICATED_TO edges with distinct flow_key."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=50)
+    read_repo = Neo4jReadRepository(live_neo4j_driver)
+
+    test_ips = ["198.51.100.131", "198.51.100.132"]
+
+    records = [
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:31:01",
+            eth_dst_resolved="02:00:00:7c:32:01",
+            ip_src="198.51.100.131",
+            ip_dst="198.51.100.132",
+            protocol="TLS",
+            src_port=52001,
+            dst_port=443,
+            observed_packet_count=10,
+            observed_bytes=1500,
+            first_seen=100.0,
+            last_seen=105.0,
+            observed_window_seconds=5.0,
+            observed_l2_pairs=(("02:00:00:7c:31:01", "02:00:00:7c:32:01"),),
+        ),
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:31:01",
+            eth_dst_resolved="02:00:00:7c:32:01",
+            ip_src="198.51.100.131",
+            ip_dst="198.51.100.132",
+            protocol="TLS",
+            src_port=52002,
+            dst_port=443,
+            observed_packet_count=15,
+            observed_bytes=2200,
+            first_seen=101.0,
+            last_seen=106.0,
+            observed_window_seconds=5.0,
+            observed_l2_pairs=(("02:00:00:7c:31:01", "02:00:00:7c:32:01"),),
+        ),
+    ]
+
+    try:
+        repo.write_traffic_records(records)
+
+        # Query depth=1 neighborhood around 131
+        nh = read_repo.get_neighborhood("198.51.100.131", depth=1)
+        assert nh is not None
+        comm_edges = [e for e in nh["edges"] if e["type"] == "COMMUNICATED_TO"]
+        assert len(comm_edges) == 2
+        assert {e["src_port"] for e in comm_edges} == {52001, 52002}
+        assert len({e["flow_key"] for e in comm_edges}) == 2
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN $ips DETACH DELETE ip", ips=test_ips).consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier STARTS WITH '02:00:00:7c:31:' OR l2.identifier STARTS WITH '02:00:00:7c:32:' DETACH DELETE l2").consume()
+
+
+@pytest.mark.integration
+def test_live_correlation_parallel_flow_distinguishability(live_neo4j_driver):
+    """Verify traffic/alert correlations with parallel flows produce distinguishable records with traffic_flow_key."""
+    ensure_schema(live_neo4j_driver)
+    repo = Neo4jRepository(live_neo4j_driver, batch_size=50)
+    read_repo = Neo4jReadRepository(live_neo4j_driver)
+
+    test_ips = ["198.51.100.141", "198.51.100.142"]
+
+    records = [
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:41:01",
+            eth_dst_resolved="02:00:00:7c:42:01",
+            ip_src="198.51.100.141",
+            ip_dst="198.51.100.142",
+            protocol="TCP",
+            src_port=53001,
+            dst_port=80,
+            observed_packet_count=5,
+            observed_bytes=500,
+            first_seen=100.0,
+            last_seen=102.0,
+            observed_window_seconds=2.0,
+            observed_l2_pairs=(("02:00:00:7c:41:01", "02:00:00:7c:42:01"),),
+        ),
+        TrafficRecord(
+            eth_src_resolved="02:00:00:7c:41:01",
+            eth_dst_resolved="02:00:00:7c:42:01",
+            ip_src="198.51.100.141",
+            ip_dst="198.51.100.142",
+            protocol="TCP",
+            src_port=53002,
+            dst_port=80,
+            observed_packet_count=8,
+            observed_bytes=800,
+            first_seen=103.0,
+            last_seen=105.0,
+            observed_window_seconds=2.0,
+            observed_l2_pairs=(("02:00:00:7c:41:01", "02:00:00:7c:42:01"),),
+        ),
+    ]
+    alerts = [
+        AlertRecord(
+            src_ip="198.51.100.141",
+            dst_ip="198.51.100.142",
+            sid=7777001,
+            message="Test HTTP Exploit Alert",
+            priority=1,
+            protocol="TCP",
+        )
+    ]
+
+    try:
+        repo.write_traffic_records(records)
+        repo.write_alert_records(alerts)
+
+        corrs, total = read_repo.list_traffic_alert_correlations()
+        corr_subset = [c for c in corrs if c["source_ip"] == "198.51.100.141" and c["target_ip"] == "198.51.100.142"]
+        assert len(corr_subset) == 2
+        assert {c["traffic_src_port"] for c in corr_subset} == {53001, 53002}
+        assert len({c["traffic_flow_key"] for c in corr_subset}) == 2
+
+    finally:
+        with live_neo4j_driver.session() as session:
+            session.run("MATCH (fact:AlertFact) WHERE fact.sid = 7777001 DETACH DELETE fact").consume()
+            session.run("MATCH (ip:IPAddress) WHERE ip.address IN $ips DETACH DELETE ip", ips=test_ips).consume()
+            session.run("MATCH (l2:Layer2Identifier) WHERE l2.identifier STARTS WITH '02:00:00:7c:41:' OR l2.identifier STARTS WITH '02:00:00:7c:42:' DETACH DELETE l2").consume()

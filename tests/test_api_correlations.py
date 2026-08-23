@@ -19,6 +19,9 @@ def test_list_traffic_alert_correlations_success():
                 "source_ip": "192.168.1.10",
                 "target_ip": "192.168.1.20",
                 "traffic_protocol": "TCP",
+                "traffic_flow_key": "f" * 64,
+                "traffic_src_port": 50000,
+                "traffic_dst_port": 80,
                 "fact_key": "c" * 64,
                 "sid": 2100498,
                 "message": "GPL ATTACK_RESPONSE id check returned root",
@@ -39,6 +42,9 @@ def test_list_traffic_alert_correlations_success():
     assert data["items"][0]["source_ip"] == "192.168.1.10"
     assert data["items"][0]["target_ip"] == "192.168.1.20"
     assert data["items"][0]["traffic_protocol"] == "TCP"
+    assert data["items"][0]["traffic_flow_key"] == "f" * 64
+    assert data["items"][0]["traffic_src_port"] == 50000
+    assert data["items"][0]["traffic_dst_port"] == 80
     assert data["items"][0]["fact_key"] == "c" * 64
     assert data["items"][0]["priority"] == 1
 
