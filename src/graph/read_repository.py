@@ -418,7 +418,7 @@ class Neo4jReadRepository:
                last_observed,
                outbound_enriched_aggs,
                inbound_enriched_aggs
-        {order_clause}
+        ORDER BY {order_clause}
         SKIP $offset LIMIT $limit
         """
 
