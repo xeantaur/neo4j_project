@@ -1,8 +1,8 @@
 import React from 'react';
-import { Shield, Network, AlertTriangle, GitCompare, Route, Activity } from 'lucide-react';
+import { Shield, Network, AlertTriangle, GitCompare, Route, Activity, Upload } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 
-export type ActiveView = 'overview' | 'network' | 'alerts' | 'correlations' | 'path';
+export type ActiveView = 'overview' | 'network' | 'alerts' | 'correlations' | 'path' | 'import';
 
 interface HeaderProps {
   activeView: ActiveView;
@@ -25,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'alerts', label: 'Alert Explorer', icon: <AlertTriangle size={16} /> },
     { id: 'correlations', label: 'Correlations', icon: <GitCompare size={16} /> },
     { id: 'path', label: 'Path Finder', icon: <Route size={16} /> },
+    { id: 'import', label: 'Import Data', icon: <Upload size={16} /> },
   ];
 
   return (

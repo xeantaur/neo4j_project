@@ -9,13 +9,20 @@ import hashlib
 import ipaddress
 import json
 import logging
-from typing import List, Dict, Any, Iterator, TypeVar
+from typing import List, Dict, Any, Iterator, TypeVar, Optional, Tuple
 
 from src.ingestion.models import TrafficRecord, AlertRecord
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+# Scoped deletion of all application-owned graph entities
+CYPHER_SCOPED_CLEANUP = """
+MATCH (n)
+WHERE n:IPAddress OR n:Layer2Identifier OR n:AlertFact
+DETACH DELETE n
+"""
 
 # Cypher statements for batched parameter ingestion
 CYPHER_WRITE_TRAFFIC_BATCH = """
@@ -196,3 +203,88 @@ class Neo4jRepository:
         """Managed transaction work function for alert batch."""
         result = tx.run(CYPHER_WRITE_ALERT_BATCH, batch=batch)
         result.consume()
+
+    def replace_workspace_data(
+        self,
+        traffic_records: Optional[List[TrafficRecord]] = None,
+        alert_records: Optional[List[AlertRecord]] = None,
+    ) -> Tuple[int, int]:
+        """Atomically replace the current analysis workspace in a single managed write transaction.
+
+        1. Executes scoped deletion of all application-owned graph entities (:IPAddress, :Layer2Identifier, :AlertFact).
+        2. Writes all provided traffic records in batched UNWIND calls within the transaction.
+        3. Writes all provided alert records in batched UNWIND calls within the transaction.
+
+        If any error occurs during cleanup or write execution, the transaction is automatically
+        rolled back by the driver, leaving the previous analysis workspace completely intact.
+
+        Returns:
+            Tuple of (traffic_records_persisted_count, alert_facts_persisted_count)
+        """
+        traffic_payload: List[Dict[str, Any]] = []
+        if traffic_records:
+            traffic_payload = [
+                {
+                    "ip_src": canonicalize_ip(r.ip_src),
+                    "ip_dst": canonicalize_ip(r.ip_dst),
+                    "eth_src_resolved": r.eth_src_resolved,
+                    "eth_dst_resolved": r.eth_dst_resolved,
+                    "protocol": r.protocol,
+                }
+                for r in traffic_records
+            ]
+
+        alert_payload: List[Dict[str, Any]] = []
+        if alert_records:
+            alert_payload = [
+                {
+                    "src_ip": canonicalize_ip(a.src_ip),
+                    "dst_ip": canonicalize_ip(a.dst_ip),
+                    "fact_key": compute_alert_fact_key(a),
+                    "sid": a.sid,
+                    "gid": a.gid,
+                    "rev": a.rev,
+                    "message": a.message,
+                    "priority": a.priority,
+                    "protocol": a.protocol,
+                    "src_port": a.src_port,
+                    "dst_port": a.dst_port,
+                }
+                for a in alert_records
+            ]
+
+        logger.info(
+            "Executing atomic workspace replacement (%d traffic records, %d alert records)...",
+            len(traffic_payload),
+            len(alert_payload),
+        )
+
+        def _work(tx) -> Tuple[int, int]:
+            # Step 1: Scoped graph cleanup
+            logger.debug("Executing scoped graph cleanup Cypher...")
+            del_result = tx.run(CYPHER_SCOPED_CLEANUP)
+            del_result.consume()
+
+            # Step 2: Ingest traffic batches if provided
+            if traffic_payload:
+                for batch in chunk_list(traffic_payload, self.batch_size):
+                    res = tx.run(CYPHER_WRITE_TRAFFIC_BATCH, batch=batch)
+                    res.consume()
+
+            # Step 3: Ingest alert batches if provided
+            if alert_payload:
+                for batch in chunk_list(alert_payload, self.batch_size):
+                    res = tx.run(CYPHER_WRITE_ALERT_BATCH, batch=batch)
+                    res.consume()
+
+            return len(traffic_payload), len(alert_payload)
+
+        with self.driver.session() as session:
+            persisted_traffic, persisted_alerts = session.execute_write(_work)
+
+        logger.info(
+            "Atomic workspace replacement completed successfully: %d traffic records, %d alert facts.",
+            persisted_traffic,
+            persisted_alerts,
+        )
+        return persisted_traffic, persisted_alerts

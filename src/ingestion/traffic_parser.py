@@ -113,8 +113,8 @@ def parse_traffic_file(file_path: str) -> Tuple[List[TrafficRecord], IngestionSu
                 record_warning("malformed_columns", f"Row {idx} has {len(row)} columns, expected {len(first_row)}")
                 skipped_count += 1
                 continue
-            eth_src_idx = header_cols.get("eth_src_resolved") or header_cols.get("eth_src")
-            eth_dst_idx = header_cols.get("eth_dst_resolved") or header_cols.get("eth_dst")
+            eth_src_idx = header_cols.get("eth_src_resolved") if "eth_src_resolved" in header_cols else header_cols.get("eth_src")
+            eth_dst_idx = header_cols.get("eth_dst_resolved") if "eth_dst_resolved" in header_cols else header_cols.get("eth_dst")
             ip_src_idx = header_cols.get("ip_src")
             ip_dst_idx = header_cols.get("ip_dst")
             proto_idx = header_cols.get("protocol")

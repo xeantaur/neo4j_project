@@ -7,6 +7,7 @@ import { NetworkExplorerPage } from './pages/NetworkExplorerPage';
 import { AlertExplorerPage } from './pages/AlertExplorerPage';
 import { CorrelationsPage } from './pages/CorrelationsPage';
 import { PathFinderPage } from './pages/PathFinderPage';
+import { ImportDataPage } from './pages/ImportDataPage';
 
 export const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('overview');
@@ -45,6 +46,13 @@ export const App: React.FC = () => {
     const interval = setInterval(checkHealth, 60000);
     return () => clearInterval(interval);
   }, [checkHealth]);
+
+  // Clear cross-view investigation context upon successful workspace replacement
+  const handleImportSuccess = () => {
+    setCenterIp(null);
+    setPathSourceIp(null);
+    setPathTargetIp(null);
+  };
 
   // Unified navigation handler
   const handleNavigate = (
@@ -108,6 +116,12 @@ export const App: React.FC = () => {
             initialSourceIp={pathSourceIp}
             initialTargetIp={pathTargetIp}
             onNavigate={handleNavigate}
+          />
+        )}
+        {activeView === 'import' && (
+          <ImportDataPage
+            onNavigate={handleNavigate}
+            onImportSuccess={handleImportSuccess}
           />
         )}
       </main>
