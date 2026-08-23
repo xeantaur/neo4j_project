@@ -438,7 +438,7 @@ export const ImportDataPage: React.FC<ImportDataPageProps> = ({ onNavigate, onIm
               <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>Network Traffic</h3>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Supported format: tshark-compatible tab-separated TSV export with MAC, IP endpoints, and protocols.
+              Supported format: legacy 7-column TSV or project-defined enriched tshark TSV export profile (ports, packet counts, frame bytes).
             </p>
           </div>
 

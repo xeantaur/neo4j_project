@@ -303,7 +303,7 @@ class FileValidationResult(BaseModel):
     provided: bool = Field(description="Whether this file source was provided in the upload")
     filename: Optional[str] = Field(default=None, description="Original filename metadata")
     total_raw_records: Optional[int] = Field(default=None, description="Total raw input lines or items parsed")
-    valid_records: Optional[int] = Field(default=None, description="Count of valid normalized domain records")
+    valid_records: Optional[int] = Field(default=None, description="Count of valid normalized domain records / communication aggregates")
     skipped_records: Optional[int] = Field(default=None, description="Count of skipped or malformed records")
     duplicate_records: Optional[int] = Field(default=None, description="Count of duplicate records identified")
     warning_counts: Dict[str, int] = Field(default_factory=dict, description="Categorized warning counts")
@@ -332,7 +332,7 @@ class ImportResultResponse(BaseModel):
     """Atomic workspace replacement result."""
     success: bool = Field(description="Whether the active workspace was successfully replaced")
     workspace_replaced: bool = Field(description="Confirmation that previous workspace data was cleared and replaced")
-    traffic_records_persisted: int = Field(description="Count of TrafficRecord observations persisted")
+    traffic_records_persisted: int = Field(description="Count of normalized traffic records / communication aggregates persisted")
     alert_facts_persisted: int = Field(description="Count of AlertFact nodes persisted")
     capabilities: ImportCapabilities = Field(description="Active analysis capabilities in the new workspace")
     message: str = Field(description="Human-readable result summary")

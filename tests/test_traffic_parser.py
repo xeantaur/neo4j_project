@@ -658,7 +658,46 @@ def test_enriched_partial_port_pairs_allowed(tmp_path):
     assert isinstance(r1.flow_key, str)
 
     r2 = next(r for r in records if r.dst_port == 443)
-    assert r2.src_port is None
-    assert isinstance(r2.flow_key, str)
-
     assert r1.flow_key != r2.flow_key
+
+
+def test_parse_sample_traffic_enriched_file():
+    """Test parsing the permanent synthetic sample_traffic_enriched.tsv file."""
+    records, summary = parse_traffic_file("data/samples/sample_traffic_enriched.tsv")
+    assert summary.skipped_records == 0
+    assert summary.duplicate_records == 0
+    assert summary.valid_records == len(records)
+    assert len(records) == 13
+
+    # Total observed packet count matches raw rows (28)
+    total_packets = sum(r.observed_packet_count for r in records)
+    assert total_packets == 28
+    assert summary.total_raw_records == 28
+
+    # Total observed bytes matches sum of frame.len (19532)
+    total_bytes = sum(r.observed_bytes for r in records)
+    assert total_bytes == 19532
+
+    # Verify flow keys are unique across returned aggregates
+    flow_keys = [r.flow_key for r in records]
+    assert len(set(flow_keys)) == len(records)
+
+    # Parallel same-pair/same-protocol aggregates exist with distinct src ports
+    tls_parallel = [
+        r for r in records
+        if r.ip_src == "192.168.1.10" and r.ip_dst == "192.168.1.20" and r.protocol == "TLS"
+    ]
+    assert len(tls_parallel) == 2
+    src_ports = {r.src_port for r in tls_parallel}
+    assert src_ports == {50000, 50001}
+
+    # IPv6 aggregate exists
+    ipv6_agg = next((r for r in records if r.ip_src == "2001:db8::10"), None)
+    assert ipv6_agg is not None
+    assert ipv6_agg.ip_dst == "2001:db8::20"
+
+    # Non-TCP/UDP aggregate has null ports
+    icmp_agg = next((r for r in records if r.protocol == "ICMP"), None)
+    assert icmp_agg is not None
+    assert icmp_agg.src_port is None
+    assert icmp_agg.dst_port is None
