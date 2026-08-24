@@ -1,6 +1,6 @@
 # Security Investigation Dashboard (Frontend)
 
-React 19 + TypeScript + Cytoscape.js web application for investigating network traffic topology, Layer 2 associations, normalized security alert facts, and communication paths powered by the read-only FastAPI backend.
+React 19 + TypeScript 6.x + Cytoscape.js web application for investigating network traffic topology, enriched communication aggregates, Layer 2 associations, normalized security alert facts, and communication paths powered by the read-oriented FastAPI backend with explicitly gated browser data-import mutation endpoints.
 
 ## Getting Started
 
@@ -35,10 +35,11 @@ By default, Vite runs at `http://localhost:5173`.
 
 - **`src/api/`**: Typed native-fetch API client matching FastAPI Pydantic response models with explicit nullability.
 - **`src/components/graph/`**: Cytoscape.js canvas integration with hierarchical, force-directed, and concentric layout algorithms.
-- **`src/components/layout/`**: Header with live backend health/readiness pills and node inspection drawer.
+- **`src/components/layout/`**: Header with live backend health/readiness pills and contextual slide drawers.
 - **`src/pages/`**: Single-page application views:
-  - `OverviewPage`: Aggregate metrics and workflow navigation.
-  - `NetworkExplorerPage`: Center-rooted neighborhood graph and inspection.
+  - `OverviewPage`: Global volume metrics, metric completeness mode, and endpoint rankings.
+  - `NetworkExplorerPage`: Center-rooted neighborhood graph, parallel flow rendering, and inspection drawers.
   - `AlertExplorerPage`: Normalized security alert facts table and detail modal.
-  - `CorrelationsPage`: Traffic/alert co-occurrence analysis.
-  - `PathFinderPage`: Observed communication path finding.
+  - `CorrelationsPage`: Traffic/alert co-occurrence analysis with flow keys and ports.
+  - `PathFinderPage`: Observed directional communication hop chain visualizer.
+  - `ImportDataPage`: Browser data import, dual-file validation, and workspace replacement.

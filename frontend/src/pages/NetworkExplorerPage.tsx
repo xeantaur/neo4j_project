@@ -44,6 +44,21 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
   // Selected edge state
   const [selectedEdge, setSelectedEdge] = useState<CytoscapeEdgeData | null>(null);
 
+  // Stable selection callbacks to avoid unintended Cytoscape canvas destruction on state updates
+  const handleNodeSelect = useCallback((node: {
+    id: string;
+    type: 'IPAddress' | 'Layer2Identifier';
+    value: string;
+  } | null) => {
+    setSelectedNode(node);
+    if (node) setSelectedEdge(null);
+  }, []);
+
+  const handleEdgeSelect = useCallback((edge: CytoscapeEdgeData | null) => {
+    setSelectedEdge(edge);
+    if (edge) setSelectedNode(null);
+  }, []);
+
   // Observed IP quick-pick list with pagination support
   const [ipList, setIpList] = useState<IPAddressResponse[]>([]);
   const [ipOffset, setIpOffset] = useState<number>(0);
@@ -319,14 +334,8 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
             ref={canvasRef}
             data={graphData}
             layoutName={layoutName}
-            onNodeSelect={(node) => {
-              setSelectedNode(node);
-              if (node) setSelectedEdge(null);
-            }}
-            onEdgeSelect={(edge) => {
-              setSelectedEdge(edge);
-              if (edge) setSelectedNode(null);
-            }}
+            onNodeSelect={handleNodeSelect}
+            onEdgeSelect={handleEdgeSelect}
             selectedNodeId={selectedNode?.id}
             selectedEdgeId={selectedEdge?.id}
           />

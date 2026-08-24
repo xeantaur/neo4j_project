@@ -19,7 +19,7 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
     app = FastAPI(
         title=f"{APP_NAME} — Graph Query API",
-        version="1.2.0",
+        version="1.2.1",
         description=(
             "Read-oriented graph analysis API with explicitly gated data-import "
             "mutation endpoints for exploring network traffic topology, Layer 2/3 associations, "

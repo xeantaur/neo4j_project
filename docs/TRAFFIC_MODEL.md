@@ -41,10 +41,22 @@ frame.number    frame.time_epoch    frame.len    eth.src    eth.dst    ip.src   
 Packet observations sharing the same directional 5-tuple are deterministically aggregated into a single `TrafficRecord`:
 
 - **Canonical Identity Tuple:** `(canonical src_ip, canonical dst_ip, normalized protocol, src_port, dst_port)`
-- **`flow_key`:** Deterministic SHA-256 digest of the canonical identity tuple:
+- **`flow_key`:** Deterministic SHA-256 digest of the canonical JSON-serialized identity payload matching [`compute_flow_key`](../src/ingestion/models.py):
   ```python
-  raw_key = f"{src_ip}|{dst_ip}|{protocol}|{src_port or ''}|{dst_port or ''}"
-  flow_key = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+  canonical_payload = {
+      "src_ip": canonicalize_ip(ip_src),
+      "dst_ip": canonicalize_ip(ip_dst),
+      "protocol": protocol.strip().upper() if protocol else "UNKNOWN",
+      "src_port": src_port if src_port is not None else "null",
+      "dst_port": dst_port if dst_port is not None else "null",
+  }
+  serialized = json.dumps(
+      canonical_payload,
+      sort_keys=True,
+      separators=(",", ":"),
+      ensure_ascii=False,
+  )
+  flow_key = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
   ```
 - **Volume Metrics:** Sum of packet observations (`observed_packet_count`) and sum of wire frame bytes (`observed_bytes`).
 - **Time Bounds:** Earliest observation (`first_seen`), latest observation (`last_seen`), and window duration (`observed_window_seconds = last_seen - first_seen`).
