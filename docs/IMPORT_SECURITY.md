@@ -15,7 +15,7 @@ The browser data import workflow enables users to upload custom network traffic 
 - **Disabled by Default:** Browser mutation endpoints are disabled by default (`DATA_IMPORT_ENABLED=false`). They must be explicitly enabled via environment configuration.
 - **Stateless Validation Pre-Flight:** Uploads can be pre-validated (`POST /api/v1/import/validate`) to inspect diagnostics, format detection, and parse statistics before executing database mutations.
 - **Atomic Replacement & Rollback:** Graph data replacement (`POST /api/v1/import`) runs inside managed transactions (`session.execute_write`). If ingestion fails at any stage, the transaction rolls back, preserving previous graph state.
-- **Concurrency Locking:** An in-process `asyncio.Lock` ensures that only one import request can execute at a time per FastAPI worker process (returning `409 Conflict` on concurrent attempts).
+- **Concurrency Locking:** An in-process `threading.Lock` ensures that only one import request can execute at a time per FastAPI worker process (returning `409 Conflict` on concurrent attempts).
 - **Immediate File Cleanup:** Uploaded temporary files on disk are unlinked in `finally` blocks immediately after validation or ingestion.
 
 ---

@@ -84,11 +84,11 @@ frontend/src/
 
 ### 1. Ingestion Pipeline (`src/ingestion/`)
 - **`traffic_parser.py`**: Dual-mode parser supporting basic 7-column TSVs and enriched 14-column tshark TSVs. Performs IP canonicalization (RFC 5952), port validation, packet count and wire frame byte aggregation, timestamp interval tracking, and deterministic SHA-256 `flow_key` calculation.
-- **`alert_parser.py`**: Parses Snort/IDS JSON alert arrays, validates signature IDs and numeric priorities, canonicalizes IP endpoints, and computes deterministic SHA-256 `fact_key` hashes.
+- **`alert_parser.py`**: Parses Snort/IDS JSON alert arrays, validates required source and destination IP endpoints, normalizes and validates optional numeric rule metadata (signature IDs, generator IDs, revisions, numeric priorities), normalizes protocols, and creates immutable `AlertRecord` instances with bounded diagnostic telemetry. (Canonical IP transformation and deterministic SHA-256 `fact_key` computation are performed by the persistence layer in `src/graph/repository.py`).
 - **`models.py`**: Immutable domain dataclasses (`TrafficRecord`, `AlertRecord`, `IngestionSummary`, `L2Pair`).
 
 ### 2. Graph Persistence Layer (`src/graph/`)
-- **`schema.py`**: Declares and ensures Neo4j 5.x uniqueness constraints (`IPAddress.address`, `Layer2Identifier.identifier`, `AlertFact.fact_key`) and RANGE indexes (`COMMUNICATED_TO.flow_key`, `AlertFact.priority`, `AlertFact.sid`).
+- **`schema.py`**: Declares and ensures Neo4j 5.x uniqueness constraints (`IPAddress.address`, `Layer2Identifier.identifier`, `AlertFact.fact_key`) and RANGE indexes (`AlertFact.priority`, `AlertFact.sid`).
 - **`repository.py`**: Executes batched Cypher writes using parameterized `UNWIND` blocks inside managed write transactions (`session.execute_write`). Contains `replace_workspace_data` for atomic workspace clearing and re-ingestion with rollback protection.
 
 ### 3. Read Query Layer (`src/graph/read_repository.py`)
@@ -101,7 +101,7 @@ frontend/src/
 - Employs lifespan events for database connectivity lifecycle and FastAPI dependency injection for repository access.
 
 ### 5. Web Frontend (`frontend/`)
-- Single-page application built with **React 19**, **TypeScript 5.x**, and **Vite 8**.
+- Single-page application built with **React 19**, **TypeScript 6.x**, and **Vite 8**.
 - **Graph Engine:** Cytoscape.js with custom dark cybersecurity styling, bezier curve multi-edge routing for parallel flows, and node/edge interaction handlers.
 - **Slide Drawers:** Contextual inspectors (`CommunicationEdgePanel`, `IPDetailPanel`, `Layer2DetailPanel`) for deep entity analysis without navigating away from the canvas.
 

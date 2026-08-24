@@ -1,12 +1,12 @@
 # Network Traffic & Security Alert Analysis with Neo4j
 
 [![CI](https://github.com/s3rt4c/neo4j_project/actions/workflows/ci.yml/badge.svg)](https://github.com/s3rt4c/neo4j_project/actions/workflows/ci.yml)
-![Release v1.2.0](https://img.shields.io/badge/release-v1.2.0-blue.svg)
+![Release v1.2.1](https://img.shields.io/badge/release-v1.2.1-blue.svg)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB.svg?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg?logo=fastapi&logoColor=white)
 ![Neo4j 5.x](https://img.shields.io/badge/Neo4j-5.x-008CC1.svg?logo=neo4j&logoColor=white)
 ![React 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg?logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6.svg?logo=typescript&logoColor=white)
 
 Graph-based cybersecurity analysis platform transforming network traffic exports (basic TSV or enriched tshark exports) and Snort/IDS alerts into an interactive Neo4j property graph with a typed FastAPI backend and React + Cytoscape.js dashboard.
 
@@ -97,7 +97,7 @@ The platform correlates network traffic exports and IDS alert facts in Neo4j acr
 |---|---|
 | **Backend** | Python 3.10+, FastAPI, Pydantic v2, pandas, python-dotenv |
 | **Database** | Neo4j 5.x (Cypher batched UNWIND, uniqueness constraints, RANGE indexes) |
-| **Frontend** | React 19, TypeScript 5.x, Cytoscape.js 3+, Vite 8 |
+| **Frontend** | React 19, TypeScript 6.x, Cytoscape.js 3+, Vite 8 |
 | **Testing & CI** | pytest, Vitest, Docker Compose, GitHub Actions CI (Python 3.10/3.14, Node 24) |
 
 ---
@@ -125,7 +125,7 @@ Flow-aware correlation table pairing observed communications with security alert
 
 - **Backend Unit & API Tests:** `pytest` (145+ unit tests covering dual-mode parsers, models, and FastAPI routes).
 - **Opt-In Live Neo4j Integration:** Real graph persistence, constraint enforcement, and atomic rollback verification against disposable Neo4j containers (`pytest -m integration`).
-- **Frontend Quality:** 50 Vitest component tests, TypeScript type checks, ESLint, and production build verification.
+- **Frontend Quality:** 50 Vitest component tests, TypeScript type checks, oxlint, and production build verification.
 - **Continuous Integration:** GitHub Actions matrix verifying Python 3.10, Python 3.14, Node 24, and live Neo4j on every pull request.
 
 ---
