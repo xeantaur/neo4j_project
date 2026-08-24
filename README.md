@@ -1,28 +1,101 @@
 # Network Traffic & Security Alert Analysis with Neo4j
 
 [![CI](https://github.com/s3rt4c/neo4j_project/actions/workflows/ci.yml/badge.svg)](https://github.com/s3rt4c/neo4j_project/actions/workflows/ci.yml)
+![Release v1.2.0](https://img.shields.io/badge/release-v1.2.0-blue.svg)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB.svg?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg?logo=fastapi&logoColor=white)
+![Neo4j 5.x](https://img.shields.io/badge/Neo4j-5.x-008CC1.svg?logo=neo4j&logoColor=white)
+![React 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg?logo=typescript&logoColor=white)
 
-Graph-based network traffic and security alert analysis using Neo4j, FastAPI, and React with Cytoscape.js.
+Graph-based cybersecurity analysis platform transforming network traffic exports (basic TSV or enriched tshark exports) and Snort/IDS alerts into an interactive Neo4j property graph with a typed FastAPI backend and React + Cytoscape.js dashboard.
 
-> **Origin:** This project was originally developed during a cybersecurity internship (September 2024). It is being modernized from an internship prototype into a portfolio-quality cybersecurity analysis tool. The modernized system uses a typed, modular ingestion pipeline supporting both basic topology and enriched packet-observation aggregation, a normalized fact-based graph model, batched `UNWIND` persistence with Neo4j 5.x constraints, a read-oriented FastAPI REST backend with traffic analytics endpoints and explicitly gated browser data-import mutation endpoints, and an interactive React + Cytoscape.js web dashboard with parallel flow visualization and communication edge inspection.
+![Overview Dashboard](docs/images/overview-enriched-analytics.png)
+
+> **Origin & Evolution:** This project originated during a cybersecurity internship (September 2024) and was re-engineered into a portfolio-grade cybersecurity tool. The modernized architecture features a typed, dual-mode traffic ingestion pipeline, deterministic SHA-256 flow aggregation, normalized fact-based Neo4j 5.x property graph persistence, a read-optimized FastAPI REST backend, and a dark-themed React + Cytoscape.js visualization interface.
+
+---
+
+## Technical Highlights
+
+- **Deterministic Flow Aggregation:** Computes canonical SHA-256 `flow_key` identifiers for directional 5-tuples `(src_ip, dst_ip, protocol, src_port, dst_port)`, preserving parallel flows (e.g. concurrent TLS connections) as distinct graph relationships.
+- **Dual-Mode Traffic Ingestion Pipeline:** Seamlessly ingests both basic 7-column network exports and rich 14-column tshark/Wireshark observation profiles with wire frame bytes and observation timestamps.
+- **Normalized Fact-Based Graph Model:** Persists Layer 3 communication aggregates, Layer 2 Ethernet frame topology, Layer 2/3 associations, and normalized `:AlertFact` entities using batched `UNWIND` Cypher operations with Neo4j 5.x uniqueness constraints and RANGE indexes.
+- **Read-Oriented FastAPI REST API:** High-performance backend providing OpenAPI (Swagger/ReDoc) documentation, Pydantic v2 request canonicalization and response modeling, and dedicated endpoints for traffic volume metrics, endpoint rankings, and graph traversals.
+- **Interactive Graph Visualizer & Inspectors:** React 19 + TypeScript + Cytoscape.js interface supporting multiple layout algorithms, parallel edge rendering, edge inspection drawer (`CommunicationEdgePanel`), and IP context drawer (`IPDetailPanel`).
+- **Atomic Browser Data Import:** Gated single active workspace replacement (`DATA_IMPORT_ENABLED=true`) with stateless multi-file validation, size limits, pre-flight diagnostics, and transactional rollback protection.
+- **Rigorous Verification & CI:** Comprehensive test suite with 150+ pytest and vitest test cases, opt-in live Neo4j integration testing with disposable containers, and multi-version Python CI (3.10 and 3.14).
+
+---
+
+## Quick Demo with Synthetic Samples
+
+To run the application locally in 60 seconds using the included synthetic datasets:
+
+```bash
+# 1. Start Neo4j test container
+docker compose up -d neo4j-test
+
+# 2. Configure environment
+cp .env.example .env
+# Set in .env:
+# NEO4J_URI=bolt://localhost:17687
+# NEO4J_PASSWORD=phase6-test-password
+# DATA_IMPORT_ENABLED=true
+
+# 3. Start Backend (Terminal 1)
+uvicorn src.api.app:app --host 127.0.0.1 --port 8000
+
+# 4. Start Frontend (Terminal 2)
+cd frontend && npm install && npm run dev
+```
+
+Open `http://localhost:5173`, navigate to **Import Data**, and select:
+- **Traffic TSV:** `data/samples/sample_traffic_enriched.tsv`
+- **Alerts JSON:** `data/samples/sample_alerts.json`
+
+Click **Validate Files** -> check confirmation -> click **Import & Analyze**.
+
+---
 
 ## What It Does
 
-This application ingests network traffic and security alert data, persists them into a Neo4j graph database for relationship and volume analysis, and provides a typed REST API and interactive web dashboard.
+The platform ingests network traffic exports and IDS alerts, correlates them in Neo4j, and exposes analytical views across three operational modes:
 
-Users can analyze data across three supported operational modes:
-
-1. **Network traffic only** (basic legacy TSV or project-defined enriched tshark export) — Layer 2 identifiers, IP addresses, observed communication protocols, transport ports, observed packet counts, frame bytes, observation windows, and network path exploration.
+1. **Network traffic only** (basic legacy TSV or enriched tshark export) — Layer 2 identifiers, IP addresses, observed communication protocols, transport ports, observed packet counts, frame bytes, observation windows, and network path exploration.
 2. **IDS/Snort alerts only** (JSON array) — unique normalized security alert facts with signature IDs, priority levels, protocol/port metadata, and source-target IP investigation.
-3. **Network traffic + IDS alerts together** — unified topology, traffic volume analytics, and alert fact analysis plus cross-domain traffic/alert correlation where matching endpoint evidence exists.
+3. **Network traffic + IDS alerts together** — unified topology, traffic volume analytics, alert fact analysis, and cross-domain traffic/alert correlation where matching endpoint evidence exists.
 
-At least one source file is required for browser data import.
-
-The resulting graph models:
-- **Layer 3 Communication Aggregates** — directional IP-to-IP communication aggregates with observed protocol labels, transport ports, packet counts, frame bytes, and observation windows
-- **Layer 2 Communication** — directional interface-to-interface frame topology
-- **Layer 2 / Layer 3 Resolution** — observed associations between IP addresses and Layer 2 identifiers
-- **Security Alert Facts** — unique normalized alert facts preserving source-target pairings and rule metadata
+```
+                  (:Layer2Identifier)
+                 {identifier: str (UQ)}
+                           ▲
+                           │ [:OBSERVED_WITH]
+                           │
+     (src:IPAddress) ──────────────[:COMMUNICATED_TO]─────────────▶ (dst:IPAddress)
+    {address: str (UQ)}   {flow_key: str,                         {address: str (UQ)}
+           │               protocol: str,                                  ▲
+           │               src_port: int | None,                           │
+           │               dst_port: int | None,                           │
+           │               observed_packet_count: int | None,              │
+           │               observed_bytes: int | None,                     │
+           │               first_seen: float | None,                       │
+           │               last_seen: float | None,                        │
+           │               observed_window_seconds: float | None}          │
+           │                                                               │
+           │ [:SOURCE_OF]                                                  │
+           ▼                                                               │
+      (:AlertFact) ──────────────────────────────────[:TARGETS]────────────┘
+     {fact_key: str (UQ),
+      sid: int | None,
+      gid: int | None,
+      rev: int | None,
+      message: str | None,
+      priority: int | None,
+      protocol: str | None,
+      src_port: int | None,
+      dst_port: int | None}
+```
 
 > **Analysis & Semantic Boundaries:**
 > - **Directional Communication Aggregate (`COMMUNICATED_TO`):** Represents an observed directional aggregation identified by `(src_ip, dst_ip, protocol, src_port, dst_port)`. It is **not** a reconstructed TCP session or connection state machine.
@@ -31,6 +104,8 @@ The resulting graph models:
 > - **Correlation vs Causation:** Traffic/alert correlation represents endpoint co-occurrence in captured data and does **not** prove causality.
 > - **Source / Target Semantics:** Directional endpoints reflect communication orientation and do **not** infer attacker or victim roles.
 > - **Factual Analytics:** The system reports factual cardinality and volume distributions. It does **not** generate automatic scan verdicts, maliciousness scores, or beaconing/C2 inferences.
+
+---
 
 ## Technologies
 
@@ -46,10 +121,12 @@ The resulting graph models:
 | python-dotenv | Environment-based configuration with lazy loading |
 | pytest | Automated backend test suite (unit tests, API test client, and opt-in live Neo4j integration tests) |
 | React 19 | Frontend user interface framework |
-| TypeScript 6 | Type-safe frontend client and component modeling |
+| TypeScript 5.x | Type-safe frontend client and component modeling |
 | Vite 8 | Frontend build toolchain and development server with API proxying |
 | Cytoscape.js 3+ | Interactive graph visualization engine with parallel edge support |
 | Vitest | Frontend component and unit test suite |
+
+---
 
 ## Architecture
 
@@ -123,6 +200,8 @@ frontend/src/
           └── IPDetailPanel.tsx          (IP context drawer with topology and volume metrics)
 ```
 
+---
+
 ## Traffic Ingestion & Aggregation Model
 
 The system supports two distinct network traffic formats via `src/ingestion/traffic_parser.py`:
@@ -161,45 +240,9 @@ Packet observations sharing the same 5-tuple are deterministically aggregated in
 - **Layer 2 Associations:** Distinct `(eth_src, eth_dst)` pairs observed for this directional aggregate are preserved in `observed_l2_pairs` and written as `:OBSERVED_WITH` associations.
 - **Parallel Relationships:** Distinct source ports to the same destination IP and port produce separate, parallel `COMMUNICATED_TO` relationships in Neo4j.
 
+---
+
 ## Neo4j Graph Model
-
-### Graph Schema
-
-```
-              (:Layer2Identifier)
-             {identifier: str (UQ)}
-                       ▲
-                       │ [:OBSERVED_WITH]
-                       │
- (src:IPAddress) ──────────────[:COMMUNICATED_TO]─────────────▶ (dst:IPAddress)
-{address: str (UQ)}   {flow_key: str,                         {address: str (UQ)}
-       │               protocol: str,                                  ▲
-       │               src_port: int | None,                           │
-       │               dst_port: int | None,                           │
-       │               observed_packet_count: int | None,              │
-       │               observed_bytes: int | None,                     │
-       │               first_seen: float | None,                       │
-       │               last_seen: float | None,                        │
-       │               observed_window_seconds: float | None}          │
-       │                                                               │
-       │ [:SOURCE_OF]                                                  │
-       ▼                                                               │
-  (:AlertFact) ──────────────────────────────────[:TARGETS]────────────┘
- {fact_key: str (UQ),
-  sid: int | None,
-  gid: int | None,
-  rev: int | None,
-  message: str | None,
-  priority: int | None,
-  protocol: str | None,
-  src_port: int | None,
-  dst_port: int | None}
-```
-
-```
-Layer 2 Frame Topology:
-(:Layer2Identifier) ──[:L2_COMMUNICATED_TO {protocol: str}]──▶ (:Layer2Identifier)
-```
 
 ### Node Entities
 
@@ -222,6 +265,8 @@ The API and UI categorize metric availability into four explicit modes:
 - **`basic`**: Traffic exists, but detailed measurements (packets, frame bytes, timestamps, ports) are unavailable.
 - **`enriched`**: All communication aggregates have complete Phase 7 measurements.
 - **`mixed`**: Both basic and enriched aggregates coexist. Global volume and timestamp totals reflect the enriched subset only.
+
+---
 
 ## REST API (FastAPI)
 
@@ -256,16 +301,38 @@ When the API server is running, interactive OpenAPI documentation is available a
 | `GET` | `/api/v1/graph/neighborhood/{address}` | Bounded subgraph around an IP (preserves parallel edges with distinct `flow_key`) | `address`, `depth`, `max_nodes` |
 | `GET` | `/api/v1/graph/path` | Shortest Layer 3 path between two IPs | `source`, `target`, `max_hops` |
 
-## Web Dashboard (React + Cytoscape.js)
+---
 
-The frontend provides a six-view cybersecurity dashboard:
+## Web Dashboard & Visualization
 
-1. **Overview Dashboard:** Global entity totals, traffic metric mode badge, measured volume cards (packets, frame bytes, observation window), protocol and destination port distribution grids, top fan-out / fan-in rankings, and sortable endpoint volume tables.
-2. **Network Explorer:** Interactive Cytoscape.js canvas supporting hierarchical, force-directed, and concentric layouts. Preserves parallel communication edges between the same IP pair using composite `flow_key` element IDs. Includes an **Edge Inspector Drawer** (`CommunicationEdgePanel`) showing transport ports, packets, frame bytes, timestamps, and window duration, alongside the **IP Detail Drawer**.
-3. **Alert Explorer:** Searchable, filterable table of normalized alert facts with exact numeric priorities, rule IDs, and detailed JSON inspection modal.
-4. **Correlations:** Cross-domain correlation table pairing observed communication flows with security alert facts matching source and destination IP addresses, including transport ports and distinct flow keys.
-5. **Path Finder:** Directional Layer 3 shortest path visualizer displaying intermediate hop chains and observed communication protocols.
-6. **Import Data:** Browser-based data upload interface for validating custom traffic and alert files, inspecting diagnostics, acknowledging atomic workspace replacement, and loading new datasets into Neo4j.
+The frontend provides a six-view cybersecurity dashboard built with React 19, TypeScript, and Cytoscape.js:
+
+### 1. Overview Dashboard
+Global entity counts, traffic metric mode badge, measured volume cards (packets, frame bytes, observation window), protocol and destination port distribution grids, top fan-out / fan-in rankings, and sortable endpoint volume tables.
+
+### 2. Network Explorer & Communication Edge Inspector
+Interactive Cytoscape.js canvas supporting hierarchical, force-directed, and concentric layouts. Preserves parallel communication edges between the same IP pair using composite `flow_key` element IDs. Selecting an edge opens the **Communication Aggregate Inspector** drawer displaying transport ports, packets, frame bytes, timestamps, and window duration.
+
+![Network Explorer & Communication Edge Inspector](docs/images/network-communication-inspector.png)
+
+### 3. IP Investigation Drawer
+Clicking an IP address opens the **IP Investigation Drawer**, presenting inbound and outbound aggregate counts, distinct peer counts, destination port diversity, cumulative byte and packet volumes, observation timestamps, and associated Layer 2 MAC addresses.
+
+![IP Investigation](docs/images/ip-investigation.png)
+
+### 4. Cross-Domain Correlations
+Cross-domain correlation view pairing observed communication flows with security alert facts matching source and destination IP addresses, including transport ports, signature IDs, priorities, and distinct flow keys.
+
+![Traffic & Alert Correlations](docs/images/traffic-alert-correlations.png)
+
+### 5. Alert Explorer & Path Finder
+- **Alert Explorer:** Searchable, filterable table of normalized alert facts with exact numeric priorities, rule IDs, and detailed JSON inspection modal.
+- **Path Finder:** Directional Layer 3 shortest path visualizer displaying intermediate hop chains and observed communication protocols.
+
+### 6. Browser Data Import
+Upload interface for validating custom traffic and alert files, inspecting diagnostics, acknowledging atomic workspace replacement, and loading new datasets into Neo4j.
+
+---
 
 ## Synthetic Sample Datasets
 
@@ -275,13 +342,15 @@ All sample data included in the repository is 100% synthetic RFC 1918 / RFC 3849
 - **`data/samples/sample_traffic_enriched.tsv`**: Enriched synthetic tshark export (28 raw observation rows producing 13 communication aggregates, 19,532 total frame bytes, IPv4/IPv6, parallel TLS flows, DNS, HTTP, SSH, and ICMP).
 - **`data/samples/sample_alerts.json`**: Synthetic IDS/Snort alert fact array with signature IDs, priorities, and matching endpoint pairings.
 
+---
+
 ## Setup & Running
 
 ### 1. Clone and Install Dependencies
 
 #### Backend (Python)
 ```bash
-git clone <repository-url>
+git clone https://github.com/s3rt4c/neo4j_project.git
 cd neo4j_project
 pip install -r requirements.txt
 ```
@@ -383,16 +452,22 @@ python -m pytest -m integration -v
 docker compose down
 ```
 
+---
+
 ## Migration & Rebuild Policy
 
 - **Graph Identity Changes (v1.1 vs v1.2):** In v1.1, `COMMUNICATED_TO` relationships were keyed solely on `(src_ip, dst_ip, protocol)`. In v1.2, relationships are keyed on `flow_key` `(src_ip, dst_ip, protocol, src_port, dst_port)`, supporting parallel communication edges.
 - **Re-Ingestion Recommendation:** Re-import source data or rebuild the graph from source datasets when updating from v1.1 to v1.2. The browser workspace replacement workflow naturally rebuilds the active workspace atomically.
 - **No Destructive Startup Migration:** The application does not perform destructive automatic schema migrations at startup.
 
+---
+
 ## Security Notice
 
 - **Historical Credentials:** Commits from the original prototype contained hardcoded credentials. Those historical credentials must be considered **compromised** and must never be reused in any environment. Active application configuration is loaded exclusively from environment variables via `.env`.
 - **Browser Data Import Security:** `DATA_IMPORT_ENABLED` defaults to `false`. The import endpoints do not implement user authentication or authorization. Browser mutation should only be enabled in trusted/local environments. Configured CORS origins govern cross-origin browser policies and do not provide access control.
+
+---
 
 ## Project Structure
 
@@ -406,6 +481,12 @@ neo4j_project/
 │       ├── sample_traffic.tsv     # Basic synthetic RFC 1918 traffic data
 │       ├── sample_traffic_enriched.tsv # Enriched synthetic tshark profile data
 │       └── sample_alerts.json     # Synthetic IDS alert data
+├── docs/
+│   └── images/                    # UI visuals and dashboard screenshots
+│       ├── overview-enriched-analytics.png
+│       ├── network-communication-inspector.png
+│       ├── ip-investigation.png
+│       └── traffic-alert-correlations.png
 ├── frontend/                      # React 19 + TypeScript + Cytoscape.js Dashboard
 │   ├── src/
 │   │   ├── api/                   # Typed API client modules (network, alerts, graph, importData)
@@ -451,6 +532,8 @@ neo4j_project/
 └── README.md
 ```
 
+---
+
 ## Roadmap
 
 ### Current Features
@@ -492,7 +575,9 @@ neo4j_project/
 | ~~5~~ | ~~Add web dashboard~~ (React 19 + TypeScript + Cytoscape.js) | Vitest frontend test suite & build verification | ✅ Complete |
 | ~~6~~ | ~~Integration validation, CI, regression coverage & hardening~~ | Live Neo4j integration, FastAPI live test, CI workflows | ✅ Complete |
 | ~~6.5~~ | ~~Browser data import & single active workspace replacement~~ | Stateless validation, atomic replacement, rollback, UI tests | ✅ Complete |
-| 7 | Traffic model enrichment & security analytics | Dual-mode parser, persistence, analytics API & dashboard | 🚀 Implemented (v1.2.0 RC) |
+| ~~7~~ | ~~Traffic model enrichment & security analytics~~ | Dual-mode parser, persistence, analytics API & dashboard | ✅ Complete (v1.2.0) |
+
+---
 
 ## License
 
