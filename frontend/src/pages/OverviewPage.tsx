@@ -28,7 +28,6 @@ import {
   Network,
   AlertTriangle,
   Route,
-  Activity,
   ArrowRight,
 } from 'lucide-react';
 
@@ -180,7 +179,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
           Network & Security Graph Overview
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.25rem' }}>
-          Interactive cybersecurity graph exploration and relationship analysis powered by Neo4j and FastAPI.
+          Explore observed network communications, topology, and correlated security alert facts.
         </p>
       </div>
 
@@ -237,9 +236,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Activity size={18} color="var(--accent-primary)" />
-              <span>Traffic Analytics & Volume Metrics</span>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+              Traffic Analytics & Volume Metrics
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
               Factual volume measurements, protocol distributions, and endpoint communication rankings.
@@ -253,11 +251,11 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                 label={(analyticsSummary.traffic_metrics_mode || 'none').toUpperCase()}
                 variant={
                   analyticsSummary.traffic_metrics_mode === 'enriched'
-                    ? 'emerald'
+                    ? 'indigo'
                     : analyticsSummary.traffic_metrics_mode === 'mixed'
                     ? 'amber'
                     : analyticsSummary.traffic_metrics_mode === 'basic'
-                    ? 'cyan'
+                    ? 'slate'
                     : 'slate'
                 }
               />
@@ -647,11 +645,11 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                           label={ep.traffic_metrics_mode}
                           variant={
                             ep.traffic_metrics_mode === 'enriched'
-                              ? 'emerald'
+                              ? 'indigo'
                               : ep.traffic_metrics_mode === 'mixed'
                               ? 'amber'
                               : ep.traffic_metrics_mode === 'basic'
-                              ? 'cyan'
+                              ? 'slate'
                               : 'slate'
                           }
                         />

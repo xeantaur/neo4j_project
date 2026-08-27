@@ -117,11 +117,11 @@ export const IPDetailPanel: React.FC<IPDetailPanelProps> = ({
             label={(detail.traffic_metrics_mode || 'none').toUpperCase()}
             variant={
               detail.traffic_metrics_mode === 'enriched'
-                ? 'emerald'
+                ? 'indigo'
                 : detail.traffic_metrics_mode === 'mixed'
                 ? 'amber'
                 : detail.traffic_metrics_mode === 'basic'
-                ? 'cyan'
+                ? 'slate'
                 : 'slate'
             }
           />
