@@ -20,37 +20,38 @@ export const Header: React.FC<HeaderProps> = ({
   onRetryHealth,
 }) => {
   const navItems: { id: ActiveView; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'Overview', icon: <Activity size={16} /> },
-    { id: 'network', label: 'Network Explorer', icon: <Network size={16} /> },
-    { id: 'alerts', label: 'Alert Explorer', icon: <AlertTriangle size={16} /> },
-    { id: 'correlations', label: 'Correlations', icon: <GitCompare size={16} /> },
-    { id: 'path', label: 'Path Finder', icon: <Route size={16} /> },
-    { id: 'import', label: 'Import Data', icon: <Upload size={16} /> },
+    { id: 'overview', label: 'Overview', icon: <Activity size={15} /> },
+    { id: 'network', label: 'Network Explorer', icon: <Network size={15} /> },
+    { id: 'alerts', label: 'Alert Explorer', icon: <AlertTriangle size={15} /> },
+    { id: 'correlations', label: 'Correlations', icon: <GitCompare size={15} /> },
+    { id: 'path', label: 'Path Finder', icon: <Route size={15} /> },
+    { id: 'import', label: 'Import Data', icon: <Upload size={15} /> },
   ];
 
   return (
     <header
       style={{
         backgroundColor: 'var(--bg-card)',
-        borderBottom: '1px solid var(--border-subtle)',
+        borderBottom: '1px solid var(--border-card)',
         position: 'sticky',
         top: 0,
         zIndex: 100,
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
       }}
     >
       <div
         style={{
           maxWidth: '1600px',
           margin: '0 auto',
-          padding: '0 1.25rem',
+          padding: '0 1.5rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: '56px',
+          height: '54px',
         }}
       >
         {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div
             style={{
               display: 'flex',
@@ -59,17 +60,31 @@ export const Header: React.FC<HeaderProps> = ({
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--accent-cyan-dim)',
-              color: 'var(--accent-cyan)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              backgroundColor: 'var(--accent-primary-dim)',
+              color: 'var(--accent-primary)',
+              border: '1px solid var(--accent-primary-border)',
             }}
           >
-            <Shield size={18} />
+            <Shield size={17} />
           </div>
-          <div>
-            <h1 style={{ fontSize: '1rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <h1 style={{ fontSize: '0.95rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
               Network Traffic & Security Graph
             </h1>
+            <span
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 600,
+                padding: '0.1rem 0.4rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border-subtle)',
+                fontFamily: 'var(--font-family-mono)',
+              }}
+            >
+              v1.2.1
+            </span>
           </div>
         </div>
 
@@ -90,15 +105,16 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs Bar */}
       <div
         style={{
           maxWidth: '1600px',
           margin: '0 auto',
           padding: '0 1.25rem',
           display: 'flex',
-          gap: '0.25rem',
+          gap: '0.35rem',
           borderTop: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
           overflowX: 'auto',
         }}
       >
@@ -111,18 +127,21 @@ export const Header: React.FC<HeaderProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1rem',
-                fontSize: '0.85rem',
+                gap: '0.45rem',
+                padding: '0.55rem 0.85rem',
+                fontSize: '0.8rem',
                 fontWeight: isActive ? 600 : 500,
-                color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                borderBottom: isActive ? '2px solid var(--accent-cyan)' : '2px solid transparent',
-                borderRadius: 0,
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                backgroundColor: isActive ? 'var(--accent-primary-dim)' : 'transparent',
+                borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0',
                 whiteSpace: 'nowrap',
                 transition: 'all 0.15s ease',
               }}
             >
-              {item.icon}
+              <span style={{ color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                {item.icon}
+              </span>
               <span>{item.label}</span>
             </button>
           );

@@ -53,23 +53,28 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 600 }}>Communication Path Finder</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+          Communication Path Finder
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
           Discover the shortest directional Layer 3 communication path connecting two observed endpoints.
         </p>
       </div>
 
       <div className="info-banner">
-        ℹ <strong>Reachability Notice:</strong> Calculated paths trace directional <code className="font-mono">COMMUNICATED_TO</code> relationships in the graph. This reflects observed communication flows in captured traffic rather than real-time packet routing or traceroute paths.
+        <span>ℹ</span>
+        <div>
+          <strong>Reachability Notice:</strong> Calculated paths trace directional <code className="font-mono" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', padding: '0.1rem 0.35rem', borderRadius: 'var(--radius-sm)' }}>COMMUNICATED_TO</code> relationships in the graph. This reflects observed communication flows in captured traffic rather than real-time packet routing or traceroute paths.
+        </div>
       </div>
 
       {/* Query Form */}
       <form onSubmit={handleSearchPath} className="card" style={{ padding: '1.25rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
           <div>
-            <label htmlFor="source-ip" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 500 }}>
+            <label htmlFor="source-ip" style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 500 }}>
               Origin Source IP
             </label>
             <input
@@ -78,12 +83,12 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="e.g. 192.168.1.100"
-              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.85rem' }}
+              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.825rem', padding: '0.38rem 0.65rem' }}
             />
           </div>
 
           <div>
-            <label htmlFor="target-ip" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 500 }}>
+            <label htmlFor="target-ip" style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 500 }}>
               Destination Target IP
             </label>
             <input
@@ -92,13 +97,13 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
               value={target}
               onChange={(e) => setTarget(e.target.value)}
               placeholder="e.g. 10.0.0.5"
-              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.85rem' }}
+              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.825rem', padding: '0.38rem 0.65rem' }}
             />
           </div>
 
           <div>
-            <label htmlFor="max-hops" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 500 }}>
-              Max Search Depth (Hops: {maxHops})
+            <label htmlFor="max-hops" style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 500 }}>
+              Max Search Depth (Hops: <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>{maxHops}</strong>)
             </label>
             <input
               id="max-hops"
@@ -107,7 +112,7 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
               max="10"
               value={maxHops}
               onChange={(e) => setMaxHops(Number(e.target.value))}
-              style={{ width: '100%' }}
+              style={{ width: '100%', accentColor: 'var(--accent-primary)' }}
             />
           </div>
 
@@ -116,9 +121,9 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
               type="submit"
               className="btn-primary"
               disabled={loading}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', fontSize: '0.825rem', padding: '0.42rem 0.85rem' }}
             >
-              <Route size={16} />
+              <Route size={15} />
               <span>{loading ? 'Finding Path...' : 'Find Path'}</span>
             </button>
           </div>

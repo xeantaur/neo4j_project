@@ -192,15 +192,17 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Welcome Banner */}
-      <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
-          Network & Security Graph Overview
-        </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-          Interactive cybersecurity graph exploration and relationship analysis powered by Neo4j and FastAPI.
-        </p>
+    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+      {/* Page Title & Subtitle */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+            Network & Security Graph Overview
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+            Interactive cybersecurity graph exploration and relationship analysis powered by Neo4j and FastAPI.
+          </p>
+        </div>
       </div>
 
       {error && (
@@ -211,10 +213,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
       {/* Semantic Notice */}
       <div className="info-banner">
-        ℹ <strong>AlertFact Semantic Note:</strong> Security alert facts represent unique normalized alert facts between observed source-target endpoints, not discrete timestamped event occurrences.
+        <span>ℹ</span>
+        <div>
+          <strong>AlertFact Semantic Note:</strong> Security alert facts represent unique normalized alert facts between observed source-target endpoints, not discrete timestamped event occurrences.
+        </div>
       </div>
 
-      {/* Metric Cards Grid */}
+      {/* Primary Metric Cards Grid */}
       <div
         style={{
           display: 'grid',
@@ -231,22 +236,22 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               flexDirection: 'column',
               justifyContent: 'space-between',
               gap: '1rem',
-              transition: 'border-color 0.15s ease',
+              padding: '1.25rem',
             }}
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {card.title}
                 </span>
-                <div style={{ padding: '0.35rem', backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-sm)' }}>
+                <div style={{ padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.04)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                   {card.icon}
                 </div>
               </div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
+              <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)', letterSpacing: '-0.02em' }}>
                 {loading ? <Skeleton height="32px" width="80px" /> : card.count !== null ? card.count : '—'}
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem', lineHeight: 1.4 }}>
                 {card.description}
               </p>
             </div>
@@ -256,15 +261,16 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               onClick={card.onClick}
               style={{
                 width: '100%',
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.4rem',
+                padding: '0.45rem',
               }}
             >
               <span>{card.actionLabel}</span>
-              <span>➔</span>
+              <span style={{ opacity: 0.6 }}>➔</span>
             </button>
           </div>
         ))}

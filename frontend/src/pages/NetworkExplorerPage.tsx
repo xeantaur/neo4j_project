@@ -132,9 +132,9 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
       {/* Top Controls Toolbar */}
       <div
         style={{
-          padding: '0.75rem 1.25rem',
+          padding: '0.65rem 1.5rem',
           backgroundColor: 'var(--bg-card)',
-          borderBottom: '1px solid var(--border-subtle)',
+          borderBottom: '1px solid var(--border-card)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -145,8 +145,8 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
       >
         <form onSubmit={handleFormSubmit} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           {/* Manual Input */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <label htmlFor="center-ip-input" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <label htmlFor="center-ip-input" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
               Center IP:
             </label>
             <input
@@ -155,14 +155,14 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
               value={centerInput}
               onChange={(e) => setCenterInput(e.target.value)}
               placeholder="e.g. 192.168.1.100"
-              style={{ width: '150px', fontFamily: 'var(--font-family-mono)', fontSize: '0.85rem' }}
+              style={{ width: '155px', fontFamily: 'var(--font-family-mono)', fontSize: '0.825rem', padding: '0.35rem 0.6rem' }}
             />
           </div>
 
           {/* Quick Select from Observed IPs */}
           {ipList.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <label htmlFor="ip-select" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <label htmlFor="ip-select" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 or Browse:
               </label>
               <select
@@ -172,7 +172,7 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
                   setCenterInput(e.target.value);
                   handleFetchGraph(e.target.value);
                 }}
-                style={{ fontSize: '0.8rem', maxWidth: '160px' }}
+                style={{ fontSize: '0.78rem', maxWidth: '160px', padding: '0.35rem 0.6rem' }}
               >
                 <option value="" disabled>Select observed IP</option>
                 {ipList.map((ip) => (
@@ -190,12 +190,12 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
                     className="btn-secondary"
                     disabled={ipOffset <= 0}
                     onClick={() => setIpOffset((prev) => Math.max(0, prev - IP_PAGE_SIZE))}
-                    style={{ padding: '0.15rem 0.35rem', fontSize: '0.7rem' }}
+                    style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
                     title="Previous IP page"
                   >
                     ◀
                   </button>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-family-mono)' }}>
                     {currentIpPage}/{totalIpPages}
                   </span>
                   <button
@@ -203,7 +203,7 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
                     className="btn-secondary"
                     disabled={ipOffset + IP_PAGE_SIZE >= ipTotal}
                     onClick={() => setIpOffset((prev) => prev + IP_PAGE_SIZE)}
-                    style={{ padding: '0.15rem 0.35rem', fontSize: '0.7rem' }}
+                    style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
                     title="Next IP page"
                   >
                     ▶
@@ -214,17 +214,17 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
           )}
 
           {/* Depth Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Depth:</label>
-            <div style={{ display: 'flex', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Depth:</label>
+            <div style={{ display: 'flex', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-card)', overflow: 'hidden' }}>
               <button
                 type="button"
                 onClick={() => setDepth(1)}
                 style={{
-                  padding: '0.3rem 0.6rem',
+                  padding: '0.3rem 0.65rem',
                   fontSize: '0.75rem',
-                  backgroundColor: depth === 1 ? 'var(--accent-cyan-dim)' : 'transparent',
-                  color: depth === 1 ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                  backgroundColor: depth === 1 ? 'var(--accent-primary-dim)' : 'transparent',
+                  color: depth === 1 ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontWeight: depth === 1 ? 600 : 400,
                 }}
               >
@@ -234,10 +234,10 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
                 type="button"
                 onClick={() => setDepth(2)}
                 style={{
-                  padding: '0.3rem 0.6rem',
+                  padding: '0.3rem 0.65rem',
                   fontSize: '0.75rem',
-                  backgroundColor: depth === 2 ? 'var(--accent-cyan-dim)' : 'transparent',
-                  color: depth === 2 ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                  backgroundColor: depth === 2 ? 'var(--accent-primary-dim)' : 'transparent',
+                  color: depth === 2 ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontWeight: depth === 2 ? 600 : 400,
                   borderLeft: '1px solid var(--border-subtle)',
                 }}
@@ -248,15 +248,15 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
           </div>
 
           {/* Max Nodes */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <label htmlFor="max-nodes" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <label htmlFor="max-nodes" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
               Max Nodes:
             </label>
             <select
               id="max-nodes"
               value={maxNodes}
               onChange={(e) => setMaxNodes(Number(e.target.value))}
-              style={{ fontSize: '0.8rem' }}
+              style={{ fontSize: '0.78rem', padding: '0.35rem 0.6rem' }}
             >
               <option value="25">25</option>
               <option value="50">50</option>
@@ -264,7 +264,7 @@ export const NetworkExplorerPage: React.FC<NetworkExplorerPageProps> = ({
             </select>
           </div>
 
-          <button type="submit" className="btn-primary" disabled={loading} style={{ fontSize: '0.8rem' }}>
+          <button type="submit" className="btn-primary" disabled={loading} style={{ fontSize: '0.78rem', padding: '0.38rem 0.85rem' }}>
             {loading ? 'Investigating...' : 'Investigate'}
           </button>
         </form>

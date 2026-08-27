@@ -1,71 +1,86 @@
 :root {
-  /* Background colors */
-  --bg-app: #0b0f17;
-  --bg-card: #111827;
-  --bg-card-hover: #162032;
-  --bg-sidebar: #0e1524;
-  --bg-input: #1a2332;
-  --bg-canvas: #090d14;
-  --bg-modal-backdrop: rgba(3, 7, 18, 0.8);
+  /* Application Surfaces & Backgrounds */
+  --bg-app: #080b12;
+  --bg-surface: #0d111a;
+  --bg-card: #111722;
+  --bg-card-hover: #151c28;
+  --bg-sidebar: #0a0e17;
+  --bg-input: #0f1521;
+  --bg-canvas: #080b12;
+  --bg-modal-backdrop: rgba(4, 7, 13, 0.82);
 
-  /* Border colors */
-  --border-subtle: #1e293b;
-  --border-card: #273549;
-  --border-focus: #38bdf8;
+  /* Subtle High-End SaaS Borders */
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-card: rgba(255, 255, 255, 0.10);
+  --border-hover: rgba(255, 255, 255, 0.18);
+  --border-focus: #6366f1;
 
-  /* Text colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  /* Typography & Contrast Hierarchy */
+  --text-primary: #f4f7fb;
+  --text-secondary: #9ca3af;
   --text-muted: #64748b;
-  --text-inverse: #0b0f17;
+  --text-inverse: #080b12;
 
-  /* Semantic accent colors */
+  /* Primary Product Accent (Indigo / Electric Blue) */
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-primary-dim: rgba(99, 102, 241, 0.12);
+  --accent-primary-border: rgba(99, 102, 241, 0.28);
+
+  /* Graph & Data Visualization Accent (Cyan) */
   --accent-cyan: #38bdf8;
   --accent-cyan-hover: #0ea5e9;
-  --accent-cyan-dim: rgba(56, 189, 248, 0.15);
+  --accent-cyan-dim: rgba(56, 189, 248, 0.12);
+  --accent-cyan-border: rgba(56, 189, 248, 0.28);
 
-  --accent-blue: #3b82f6;
-  --accent-amber: #f59e0b;
-  --accent-amber-dim: rgba(245, 158, 11, 0.15);
-
+  /* Semantic State Colors */
   --accent-emerald: #10b981;
-  --accent-emerald-dim: rgba(16, 185, 129, 0.15);
+  --accent-emerald-hover: #059669;
+  --accent-emerald-dim: rgba(16, 185, 129, 0.12);
+  --accent-emerald-border: rgba(16, 185, 129, 0.28);
+
+  --accent-amber: #f59e0b;
+  --accent-amber-hover: #d97706;
+  --accent-amber-dim: rgba(245, 158, 11, 0.12);
+  --accent-amber-border: rgba(245, 158, 11, 0.28);
 
   --accent-rose: #f43f5e;
-  --accent-rose-dim: rgba(244, 63, 94, 0.15);
+  --accent-rose-hover: #e11d48;
+  --accent-rose-dim: rgba(244, 63, 94, 0.12);
+  --accent-rose-border: rgba(244, 63, 94, 0.28);
 
-  --accent-purple: #a855f7;
+  --accent-blue: #3b82f6;
+  --accent-purple: #8b5cf6;
 
-  /* Priority badges */
-  --priority-1-bg: rgba(244, 63, 94, 0.2);
+  /* Security Alert Priority Badges */
+  --priority-1-bg: rgba(244, 63, 94, 0.12);
   --priority-1-text: #fda4af;
-  --priority-1-border: #f43f5e;
+  --priority-1-border: rgba(244, 63, 94, 0.35);
 
-  --priority-2-bg: rgba(245, 158, 11, 0.2);
+  --priority-2-bg: rgba(245, 158, 11, 0.12);
   --priority-2-text: #fde68a;
-  --priority-2-border: #f59e0b;
+  --priority-2-border: rgba(245, 158, 11, 0.35);
 
-  --priority-3-bg: rgba(56, 189, 248, 0.2);
+  --priority-3-bg: rgba(56, 189, 248, 0.12);
   --priority-3-text: #bae6fd;
-  --priority-3-border: #38bdf8;
+  --priority-3-border: rgba(56, 189, 248, 0.35);
 
-  --priority-unknown-bg: rgba(100, 116, 139, 0.2);
+  --priority-unknown-bg: rgba(100, 116, 139, 0.12);
   --priority-unknown-text: #cbd5e1;
-  --priority-unknown-border: #64748b;
+  --priority-unknown-border: rgba(100, 116, 139, 0.3);
 
-  /* Typography */
-  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Typography Stacks */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  /* Border Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 15px rgba(56, 189, 248, 0.3);
+  /* SaaS Elevation Shadows (Subtle, No Neon Glow) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.45), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.55), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
 }

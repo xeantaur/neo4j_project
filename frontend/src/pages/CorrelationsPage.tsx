@@ -47,16 +47,21 @@ export const CorrelationsPage: React.FC<CorrelationsPageProps> = ({ onNavigate }
   }, [limit, offset]);
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 600 }}>Traffic & Security Alert Correlations</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+          Traffic & Security Alert Correlations
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
           Observed Layer 3 communications whose source-target endpoints match generated security alert facts.
         </p>
       </div>
 
       <div className="info-banner">
-        ℹ <strong>Correlation Notice:</strong> Rows represent observed communication flows alongside matching security alert facts sharing identical source-target endpoints. Co-occurrence indicates relationship overlap in the graph, not proven causality.
+        <span>ℹ</span>
+        <div>
+          <strong>Correlation Notice:</strong> Rows represent observed communication flows alongside matching security alert facts sharing identical source-target endpoints. Co-occurrence indicates relationship overlap in the graph, not proven causality.
+        </div>
       </div>
 
       {error && (
