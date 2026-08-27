@@ -156,7 +156,7 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Observed Communication Path
                 </span>
-                <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-cyan)' }}>
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>
                   {pathResult.length} {pathResult.length === 1 ? 'Hop' : 'Hops'} from {pathResult.source} to {pathResult.target}
                 </h3>
               </div>
@@ -187,7 +187,7 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
                       style={{
                         padding: '0.6rem 0.9rem',
                         backgroundColor: 'var(--bg-card)',
-                        border: `1.5px solid ${isSource ? 'var(--accent-cyan)' : isTarget ? 'var(--accent-amber)' : 'var(--border-card)'}`,
+                        border: isSource || isTarget ? '1.5px solid var(--accent-primary)' : '1px solid var(--border-card)',
                         borderRadius: 'var(--radius-sm)',
                         display: 'flex',
                         flexDirection: 'column',
@@ -218,10 +218,10 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
                     {/* Edge Arrow with Protocol */}
                     {index < pathResult.hops.length - 1 && (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', minWidth: '70px' }}>
-                        {protocol && <Tag label={protocol} variant="cyan" />}
-                        <div style={{ display: 'flex', alignItems: 'center', color: 'var(--accent-cyan)' }}>
-                          <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--accent-cyan)' }} />
-                          <ArrowRight size={14} style={{ marginLeft: '-4px' }} />
+                        {protocol && <Tag label={protocol} variant="slate" />}
+                        <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                          <div style={{ width: '36px', height: '1.5px', backgroundColor: 'var(--text-secondary)' }} />
+                          <ArrowRight size={13} style={{ marginLeft: '-3px' }} />
                         </div>
                       </div>
                     )}
@@ -256,9 +256,9 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Step {i + 1}:</span>
-                      <span className="font-mono" style={{ color: 'var(--accent-cyan)' }}>{hopSrc}</span>
-                      <span style={{ color: 'var(--text-muted)' }}>➔</span>
-                      <span className="font-mono" style={{ color: 'var(--accent-amber)' }}>{hopDst}</span>
+                      <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{hopSrc}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>→</span>
+                      <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{hopDst}</span>
                     </div>
                     <div>
                       <Tag label={`Protocol: ${proto}`} variant="slate" />

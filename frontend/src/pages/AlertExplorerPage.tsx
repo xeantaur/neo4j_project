@@ -269,12 +269,12 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
                     {fact.message || '—'}
                   </td>
                   <td>
-                    <span className="font-mono" style={{ color: 'var(--accent-cyan)' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {fact.source_ip}
                     </span>
                   </td>
                   <td>
-                    <span className="font-mono" style={{ color: 'var(--accent-amber)' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {fact.target_ip}
                     </span>
                   </td>
@@ -391,16 +391,16 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Source IP : Port</div>
-                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--accent-cyan)', fontWeight: 600 }}>
+                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                     {selectedFact.source_ip} : {selectedFact.src_port !== null ? selectedFact.src_port : '*'}
                   </div>
                 </div>
 
-                <div style={{ fontSize: '1.25rem', color: 'var(--text-muted)' }}>➔</div>
+                <div style={{ fontSize: '1.25rem', color: 'var(--text-muted)' }}>→</div>
 
                 <div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target IP : Port</div>
-                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--accent-amber)', fontWeight: 600 }}>
+                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                     {selectedFact.target_ip} : {selectedFact.dst_port !== null ? selectedFact.dst_port : '*'}
                   </div>
                 </div>

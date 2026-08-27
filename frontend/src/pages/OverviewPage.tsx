@@ -31,9 +31,6 @@ import {
   Database,
   Shield,
   Activity,
-  BarChart2,
-  ArrowUpRight,
-  ArrowDownLeft,
 } from 'lucide-react';
 
 interface OverviewPageProps {
@@ -223,7 +220,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: '1rem',
         }}
       >
@@ -235,23 +232,18 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              gap: '1rem',
-              padding: '1.25rem',
+              gap: '0.75rem',
+              padding: '1.1rem 1.25rem',
             }}
           >
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {card.title}
-                </span>
-                <div style={{ padding: '0.4rem', backgroundColor: '#f1f5f9', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                  {card.icon}
-                </div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {card.title}
               </div>
-              <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)', letterSpacing: '-0.02em' }}>
-                {loading ? <Skeleton height="32px" width="80px" /> : card.count !== null ? card.count : '—'}
+              <div style={{ fontSize: '1.75rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)', marginTop: '0.35rem', letterSpacing: '-0.02em' }}>
+                {loading ? <Skeleton height="30px" width="70px" /> : card.count !== null ? card.count : '—'}
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem', lineHeight: 1.4 }}>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.35rem', lineHeight: 1.4 }}>
                 {card.description}
               </p>
             </div>
@@ -261,16 +253,16 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               onClick={card.onClick}
               style={{
                 width: '100%',
-                fontSize: '0.78rem',
+                fontSize: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem',
+                gap: '0.35rem',
+                padding: '0.35rem 0.5rem',
               }}
             >
               <span>{card.actionLabel}</span>
-              <span style={{ opacity: 0.6 }}>➔</span>
+              <span style={{ opacity: 0.5 }}>→</span>
             </button>
           </div>
         ))}
@@ -421,14 +413,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
             {/* Top Protocols */}
             <div className="card" style={{ padding: '1rem' }}>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <BarChart2 size={14} color="var(--accent-cyan)" />
-                <span>Top Protocols</span>
+              <h4 style={{ fontSize: '0.82rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                Top Protocols
               </h4>
               {(!analyticsSummary.protocol_distribution || analyticsSummary.protocol_distribution.length === 0) ? (
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No protocol distributions observed</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {analyticsSummary.protocol_distribution.slice(0, 6).map((proto) => (
                     <div
                       key={proto.protocol}
@@ -436,14 +427,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.4rem 0.6rem',
-                        backgroundColor: 'var(--bg-canvas)',
+                        padding: '0.35rem 0.55rem',
+                        backgroundColor: 'var(--bg-app)',
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.8rem',
                       }}
                     >
-                      <Tag label={proto.protocol} variant="cyan" />
-                      <div style={{ display: 'flex', gap: '0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem' }}>
+                      <Tag label={proto.protocol} variant="slate" />
+                      <div style={{ display: 'flex', gap: '0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         <span>{proto.communication_aggregate_count} aggs</span>
                         {proto.observed_bytes != null && (
                           <span style={{ color: 'var(--text-muted)' }}>{formatObservedBytes(proto.observed_bytes)}</span>
@@ -457,14 +448,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
             {/* Top Destination Ports */}
             <div className="card" style={{ padding: '1rem' }}>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Shield size={14} color="var(--accent-emerald)" />
-                <span>Top Destination Ports</span>
+              <h4 style={{ fontSize: '0.82rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                Top Destination Ports
               </h4>
               {(!analyticsSummary.destination_port_distribution || analyticsSummary.destination_port_distribution.length === 0) ? (
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No destination ports recorded</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {analyticsSummary.destination_port_distribution.slice(0, 6).map((port) => (
                     <div
                       key={port.dst_port}
@@ -472,16 +462,16 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.4rem 0.6rem',
-                        backgroundColor: 'var(--bg-canvas)',
+                        padding: '0.35rem 0.55rem',
+                        backgroundColor: 'var(--bg-app)',
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.8rem',
                       }}
                     >
-                      <span className="font-mono" style={{ fontWeight: 600, color: 'var(--accent-emerald)' }}>
+                      <span className="font-mono" style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
                         Port {port.dst_port}
                       </span>
-                      <div style={{ display: 'flex', gap: '0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', gap: '0.75rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         <span>{port.communication_aggregate_count} aggs</span>
                         {port.observed_bytes != null && (
                           <span style={{ color: 'var(--text-muted)' }}>{formatObservedBytes(port.observed_bytes)}</span>
@@ -495,14 +485,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
             {/* Top Fan-Out Sources */}
             <div className="card" style={{ padding: '1rem' }}>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <ArrowUpRight size={14} color="var(--accent-cyan)" />
-                <span>Top Fan-Out Sources</span>
+              <h4 style={{ fontSize: '0.82rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                Top Fan-Out Sources
               </h4>
               {(!analyticsSummary.top_fan_out || analyticsSummary.top_fan_out.length === 0) ? (
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No fan-out metrics observed</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {analyticsSummary.top_fan_out.slice(0, 6).map((item) => (
                     <div
                       key={item.address}
@@ -510,8 +499,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.4rem 0.6rem',
-                        backgroundColor: 'var(--bg-canvas)',
+                        padding: '0.35rem 0.55rem',
+                        backgroundColor: 'var(--bg-app)',
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.8rem',
                       }}
@@ -523,7 +512,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                           fontFamily: 'var(--font-family-mono)',
                           padding: '0.15rem 0.4rem',
                           fontSize: '0.75rem',
-                          color: 'var(--accent-cyan)',
+                          color: 'var(--accent-primary)',
                         }}
                       >
                         {item.address}
@@ -539,14 +528,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
             {/* Top Fan-In Destinations */}
             <div className="card" style={{ padding: '1rem' }}>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <ArrowDownLeft size={14} color="var(--accent-amber)" />
-                <span>Top Fan-In Destinations</span>
+              <h4 style={{ fontSize: '0.82rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                Top Fan-In Destinations
               </h4>
               {(!analyticsSummary.top_fan_in || analyticsSummary.top_fan_in.length === 0) ? (
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No fan-in metrics observed</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {analyticsSummary.top_fan_in.slice(0, 6).map((item) => (
                     <div
                       key={item.address}
@@ -554,8 +542,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.4rem 0.6rem',
-                        backgroundColor: 'var(--bg-canvas)',
+                        padding: '0.35rem 0.55rem',
+                        backgroundColor: 'var(--bg-app)',
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.8rem',
                       }}
@@ -567,7 +555,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                           fontFamily: 'var(--font-family-mono)',
                           padding: '0.15rem 0.4rem',
                           fontSize: '0.75rem',
-                          color: 'var(--accent-amber)',
+                          color: 'var(--accent-primary)',
                         }}
                       >
                         {item.address}

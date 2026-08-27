@@ -26,7 +26,7 @@ export const GraphLegend: React.FC = () => {
             width: '12px',
             height: '10px',
             backgroundColor: '#ffffff',
-            border: '1.5px solid #0284c7',
+            border: '1.5px solid #94a3b8',
             borderRadius: '2px',
           }}
         />
@@ -40,12 +40,12 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '12px',
             height: '10px',
-            backgroundColor: '#ffffff',
-            border: '2px solid #d97706',
+            backgroundColor: '#eff6ff',
+            border: '1.5px solid #2563eb',
             borderRadius: '2px',
           }}
         />
-        <span style={{ color: '#92400e', fontWeight: 600 }}>Center IP</span>
+        <span style={{ color: '#1e40af', fontWeight: 600 }}>Center IP</span>
       </div>
 
       {/* Layer 2 Identifier */}
@@ -55,8 +55,8 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '14px',
             height: '8px',
-            backgroundColor: '#f1f5f9',
-            border: '1.5px solid #64748b',
+            backgroundColor: '#f3f4f6',
+            border: '1.5px solid #94a3b8',
             borderRadius: '9999px',
           }}
         />
@@ -70,7 +70,7 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '18px',
             height: '2px',
-            backgroundColor: '#2563eb',
+            backgroundColor: '#64748b',
             position: 'relative',
           }}
         >
@@ -83,7 +83,7 @@ export const GraphLegend: React.FC = () => {
               height: 0,
               borderTop: '4px solid transparent',
               borderBottom: '4px solid transparent',
-              borderLeft: '5px solid #2563eb',
+              borderLeft: '5px solid #64748b',
             }}
           />
         </span>
@@ -97,7 +97,7 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '18px',
             height: '0',
-            borderTop: '2px dashed #94a3b8',
+            borderTop: '2px dashed #cbd5e1',
           }}
         />
         <span className="font-mono" style={{ fontSize: '0.7rem' }}>OBSERVED_WITH</span>

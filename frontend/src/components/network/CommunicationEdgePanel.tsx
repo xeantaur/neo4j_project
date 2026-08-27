@@ -48,9 +48,9 @@ export const CommunicationEdgePanel: React.FC<CommunicationEdgePanelProps> = ({
             fontWeight: 600,
           }}
         >
-          <span style={{ color: 'var(--accent-cyan)' }}>{cleanSource}</span>
+          <span style={{ color: 'var(--text-primary)' }}>{cleanSource}</span>
           <ArrowRight size={14} color="var(--text-muted)" />
-          <span style={{ color: 'var(--accent-amber)' }}>{cleanTarget}</span>
+          <span style={{ color: 'var(--text-primary)' }}>{cleanTarget}</span>
         </div>
       </div>
 
@@ -94,7 +94,7 @@ export const CommunicationEdgePanel: React.FC<CommunicationEdgePanelProps> = ({
           <div className="card" style={{ padding: '0.6rem' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Protocol</div>
             <div style={{ marginTop: '0.2rem' }}>
-              <Tag label={edge.protocol || 'Unknown'} variant="cyan" />
+              <Tag label={edge.protocol || 'Unknown'} variant="slate" />
             </div>
           </div>
           <div className="card" style={{ padding: '0.6rem' }}>
@@ -105,7 +105,7 @@ export const CommunicationEdgePanel: React.FC<CommunicationEdgePanelProps> = ({
           </div>
           <div className="card" style={{ padding: '0.6rem' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Dest Port</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--accent-emerald)', fontFamily: 'var(--font-family-mono)', marginTop: '0.1rem' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)', marginTop: '0.1rem' }}>
               {edge.dst_port !== null ? edge.dst_port : '—'}
             </div>
           </div>
@@ -132,7 +132,7 @@ export const CommunicationEdgePanel: React.FC<CommunicationEdgePanelProps> = ({
               </div>
               <div className="card" style={{ padding: '0.6rem' }}>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Observed Frame Bytes</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)' }}>
+                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
                   {formatObservedBytes(edge.observed_bytes)}
                 </div>
               </div>

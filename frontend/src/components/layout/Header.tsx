@@ -1,5 +1,4 @@
 import React from 'react';
-import { Network, AlertTriangle, GitCompare, Route, Activity, Upload } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 
 export type ActiveView = 'overview' | 'network' | 'alerts' | 'correlations' | 'path' | 'import';
@@ -19,24 +18,23 @@ export const Header: React.FC<HeaderProps> = ({
   dbStatus,
   onRetryHealth,
 }) => {
-  const navItems: { id: ActiveView; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'Overview', icon: <Activity size={14} /> },
-    { id: 'network', label: 'Network Explorer', icon: <Network size={14} /> },
-    { id: 'alerts', label: 'Alert Explorer', icon: <AlertTriangle size={14} /> },
-    { id: 'correlations', label: 'Correlations', icon: <GitCompare size={14} /> },
-    { id: 'path', label: 'Path Finder', icon: <Route size={14} /> },
-    { id: 'import', label: 'Import Data', icon: <Upload size={14} /> },
+  const navItems: { id: ActiveView; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'network', label: 'Network Explorer' },
+    { id: 'alerts', label: 'Alert Explorer' },
+    { id: 'correlations', label: 'Correlations' },
+    { id: 'path', label: 'Path Finder' },
+    { id: 'import', label: 'Import Data' },
   ];
 
   return (
     <header
       style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid var(--border-card)',
+        backgroundColor: 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border-subtle)',
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
       }}
     >
       <div
@@ -47,67 +45,32 @@ export const Header: React.FC<HeaderProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: '52px',
+          height: '48px',
         }}
       >
-        {/* Professional Product Brand Mark */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div
+        {/* Text-Only Product Identity */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <h1 style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+            Network Traffic & Security Graph
+          </h1>
+          <span
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '30px',
-              height: '30px',
+              fontSize: '0.7rem',
+              fontWeight: 500,
+              padding: '0.05rem 0.35rem',
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--accent-primary)',
-              color: '#ffffff',
-              boxShadow: 'var(--shadow-sm)',
+              backgroundColor: '#e5e7eb',
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-family-mono)',
             }}
           >
-            {/* Minimalist Abstract Graph Geometric Mark */}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="6" cy="6" r="3" />
-              <circle cx="18" cy="6" r="3" />
-              <circle cx="12" cy="18" r="3" />
-              <line x1="8.5" y1="7.5" x2="15.5" y2="7.5" />
-              <line x1="7.5" y1="8.5" x2="10.5" y2="15.5" />
-              <line x1="16.5" y1="8.5" x2="13.5" y2="15.5" />
-            </svg>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-              <span style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
-                GraphSec
-              </span>
-              <span style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-muted)' }}>
-                Analytics
-              </span>
-            </div>
-            <span style={{ color: 'var(--border-hover)', fontSize: '0.85rem' }}>|</span>
-            <h1 style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.01em' }}>
-              Network Traffic & Security Graph
-            </h1>
-            <span
-              style={{
-                fontSize: '0.68rem',
-                fontWeight: 600,
-                padding: '0.1rem 0.35rem',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#f1f5f9',
-                color: 'var(--text-muted)',
-                border: '1px solid var(--border-subtle)',
-                fontFamily: 'var(--font-family-mono)',
-              }}
-            >
-              v1.2.1
-            </span>
-          </div>
+            v1.2.1
+          </span>
         </div>
 
-        {/* System Health / Readiness Pills */}
+        {/* Understated Health & Readiness Indicators */}
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
           onClick={onRetryHealth}
           title="Click to re-verify connectivity"
         >
@@ -122,16 +85,16 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Navigation Tabs Bar */}
+      {/* Understated Text Navigation Bar */}
       <div
         style={{
           maxWidth: '1600px',
           margin: '0 auto',
-          padding: '0 1.25rem',
+          padding: '0 1.5rem',
           display: 'flex',
-          gap: '0.25rem',
+          gap: '1.25rem',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--bg-surface)',
           overflowX: 'auto',
         }}
       >
@@ -142,24 +105,18 @@ export const Header: React.FC<HeaderProps> = ({
               key={item.id}
               onClick={() => onViewChange(item.id)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.5rem 0.8rem',
-                fontSize: '0.78rem',
+                padding: '0.5rem 0',
+                fontSize: '0.8rem',
                 fontWeight: isActive ? 600 : 500,
-                color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                backgroundColor: isActive ? 'var(--accent-primary-dim)' : 'transparent',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                backgroundColor: 'transparent',
                 borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0',
+                borderRadius: 0,
                 whiteSpace: 'nowrap',
-                transition: 'all 0.12s ease',
+                transition: 'color 0.12s ease',
               }}
             >
-              <span style={{ color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
+              {item.label}
             </button>
           );
         })}

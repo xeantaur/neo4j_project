@@ -116,17 +116,17 @@ export const CorrelationsPage: React.FC<CorrelationsPageProps> = ({ onNavigate }
                     <PriorityBadge priority={corr.priority} />
                   </td>
                   <td>
-                    <span className="font-mono" style={{ color: 'var(--accent-cyan)' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {corr.source_ip}
                     </span>
                   </td>
                   <td>
-                    <span className="font-mono" style={{ color: 'var(--accent-amber)' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {corr.target_ip}
                     </span>
                   </td>
                   <td>
-                    <Tag label={corr.traffic_protocol} variant="cyan" />
+                    <Tag label={corr.traffic_protocol} variant="slate" />
                   </td>
                   <td className="font-mono" style={{ fontSize: '0.8rem' }}>
                     {corr.traffic_src_port != null || corr.traffic_dst_port != null

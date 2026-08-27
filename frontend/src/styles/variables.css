@@ -1,39 +1,40 @@
 :root {
-  /* Application Surfaces & Backgrounds (Light Enterprise SaaS) */
-  --bg-app: #f8fafc;
-  --bg-surface: #ffffff;
+  /* Application Surfaces & Backgrounds (Soft Neutral Enterprise) */
+  --bg-app: #f3f4f6;
+  --bg-surface: #fafafa;
   --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
+  --bg-card-hover: #f9fafb;
   --bg-sidebar: #ffffff;
   --bg-input: #ffffff;
-  --bg-canvas: #f8fafc;
-  --bg-modal-backdrop: rgba(15, 23, 42, 0.45);
+  --bg-canvas: #f3f4f6;
+  --bg-modal-backdrop: rgba(17, 24, 39, 0.5);
 
-  /* Subtle Enterprise Neutral Borders */
-  --border-subtle: #e2e8f0;
-  --border-card: #e2e8f0;
-  --border-hover: #cbd5e1;
+  /* Subtle Neutral Gray Borders */
+  --border-subtle: #e5e7eb;
+  --border-card: #e5e7eb;
+  --border-hover: #d1d5db;
   --border-focus: #2563eb;
 
   /* Typography & Contrast Hierarchy */
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-subtle: #9ca3af;
   --text-inverse: #ffffff;
 
-  /* Primary Product Accent (Disciplined Enterprise Royal Blue) */
+  /* Primary Product Accent (Restrained Blue) */
   --accent-primary: #2563eb;
   --accent-primary-hover: #1d4ed8;
   --accent-primary-dim: #eff6ff;
   --accent-primary-border: #bfdbfe;
 
-  /* Graph & Data Visualization Accent (Sky Blue) */
-  --accent-cyan: #0284c7;
-  --accent-cyan-hover: #0369a1;
-  --accent-cyan-dim: #f0f9ff;
-  --accent-cyan-border: #bae6fd;
+  /* Data & Network Links Accent (Muted Blue) */
+  --accent-cyan: #2563eb;
+  --accent-cyan-hover: #1d4ed8;
+  --accent-cyan-dim: #eff6ff;
+  --accent-cyan-border: #bfdbfe;
 
-  /* Semantic State Colors */
+  /* Semantic State Colors (Strict Functional Use) */
   --accent-emerald: #059669;
   --accent-emerald-hover: #047857;
   --accent-emerald-dim: #ecfdf5;
@@ -50,7 +51,7 @@
   --accent-rose-border: #fecaca;
 
   --accent-blue: #2563eb;
-  --accent-purple: #7c3aed;
+  --accent-purple: #6d28d9;
 
   /* Security Alert Priority Badges */
   --priority-1-bg: #fef2f2;
@@ -61,13 +62,13 @@
   --priority-2-text: #d97706;
   --priority-2-border: #fde68a;
 
-  --priority-3-bg: #f0f9ff;
-  --priority-3-text: #0284c7;
-  --priority-3-border: #bae6fd;
+  --priority-3-bg: #eff6ff;
+  --priority-3-text: #2563eb;
+  --priority-3-border: #bfdbfe;
 
-  --priority-unknown-bg: #f8fafc;
-  --priority-unknown-text: #64748b;
-  --priority-unknown-border: #e2e8f0;
+  --priority-unknown-bg: #f3f4f6;
+  --priority-unknown-text: #6b7280;
+  --priority-unknown-border: #e5e7eb;
 
   /* Typography Stacks */
   --font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -75,12 +76,12 @@
 
   /* Border Radii */
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
   --radius-full: 9999px;
 
-  /* Enterprise SaaS Elevation Shadows (Subtle, Crisp, No Glow) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+  /* Subtle Crisp Elevation Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
 }

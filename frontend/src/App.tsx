@@ -126,35 +126,6 @@ export const App: React.FC = () => {
           />
         )}
       </main>
-
-      {/* Enterprise SaaS Footer */}
-      <footer
-        style={{
-          padding: '0.85rem 1.5rem',
-          borderTop: '1px solid var(--border-card)',
-          backgroundColor: 'var(--bg-card)',
-          color: 'var(--text-muted)',
-          fontSize: '0.75rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>GraphSec Analytics Platform</span>
-          <span>—</span>
-          <span>Cybersecurity Traffic & IDS Relationship Engine</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.72rem' }}>
-          <span>Neo4j 5.x Graph</span>
-          <span style={{ opacity: 0.3 }}>•</span>
-          <span>FastAPI Service</span>
-          <span style={{ opacity: 0.3 }}>•</span>
-          <span>React 19 + Cytoscape.js</span>
-        </div>
-      </footer>
     </div>
   );
 };
