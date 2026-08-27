@@ -58,7 +58,7 @@ Open `http://localhost:5173`, navigate to **Import Data**, select `data/samples/
 
 The platform correlates network traffic exports and IDS alert facts in Neo4j across three operational modes:
 
-1. **Network traffic only** &mdash; Layer 2 MAC topology, IP addresses, observed protocols, transport ports, packet counts, frame bytes, observation windows, and hop path exploration.
+1. **Network traffic only** &mdash; Layer 2 identifier topology, IP addresses, observed protocols, transport ports, packet counts, frame bytes, observation windows, and hop path exploration.
 2. **IDS/Snort alerts only** &mdash; Unique normalized alert facts with signature IDs, priority levels, protocol/port metadata, and source-target IP investigation.
 3. **Network traffic + IDS alerts together** &mdash; Unified topology, traffic volume analytics, alert fact analysis, and cross-domain correlation where matching endpoint evidence exists.
 
@@ -110,7 +110,7 @@ Interactive graph canvas preserving parallel multi-flow curves between host pair
 ![Network Explorer & Communication Edge Inspector](docs/images/network-communication-inspector.png)
 
 ### IP Investigation Drawer
-Detailed endpoint drawer displaying inbound/outbound aggregate counts, peer diversity, destination ports, traffic volume totals, observation timestamps, and Layer 2 MAC associations.
+Detailed endpoint drawer displaying inbound/outbound aggregate counts, peer diversity, destination ports, traffic volume totals, observation timestamps, and Layer 2 identifier associations.
 
 ![IP Investigation](docs/images/ip-investigation.png)
 
@@ -125,7 +125,7 @@ Flow-aware correlation table pairing observed communications with security alert
 
 - **Backend Unit & API Tests:** `pytest` (145+ unit tests covering dual-mode parsers, models, and FastAPI routes).
 - **Opt-In Live Neo4j Integration:** Real graph persistence, constraint enforcement, and atomic rollback verification against disposable Neo4j containers (`pytest -m integration`).
-- **Frontend Quality:** 50 Vitest component tests, TypeScript type checks, oxlint, and production build verification.
+- **Frontend Quality:** 52 Vitest component tests, TypeScript type checks, oxlint, and production build verification.
 - **Continuous Integration:** GitHub Actions matrix verifying Python 3.10, Python 3.14, Node 24, and live Neo4j on every pull request.
 
 ---
