@@ -1,73 +1,73 @@
 :root {
-  /* Application Surfaces & Backgrounds */
-  --bg-app: #080b12;
-  --bg-surface: #0d111a;
-  --bg-card: #111722;
-  --bg-card-hover: #151c28;
-  --bg-sidebar: #0a0e17;
-  --bg-input: #0f1521;
-  --bg-canvas: #080b12;
-  --bg-modal-backdrop: rgba(4, 7, 13, 0.82);
+  /* Application Surfaces & Backgrounds (Light Enterprise SaaS) */
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-input: #ffffff;
+  --bg-canvas: #f8fafc;
+  --bg-modal-backdrop: rgba(15, 23, 42, 0.45);
 
-  /* Subtle High-End SaaS Borders */
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-card: rgba(255, 255, 255, 0.10);
-  --border-hover: rgba(255, 255, 255, 0.18);
-  --border-focus: #6366f1;
+  /* Subtle Enterprise Neutral Borders */
+  --border-subtle: #e2e8f0;
+  --border-card: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --border-focus: #2563eb;
 
   /* Typography & Contrast Hierarchy */
-  --text-primary: #f4f7fb;
-  --text-secondary: #9ca3af;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-muted: #64748b;
-  --text-inverse: #080b12;
+  --text-inverse: #ffffff;
 
-  /* Primary Product Accent (Indigo / Electric Blue) */
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #4f46e5;
-  --accent-primary-dim: rgba(99, 102, 241, 0.12);
-  --accent-primary-border: rgba(99, 102, 241, 0.28);
+  /* Primary Product Accent (Disciplined Enterprise Royal Blue) */
+  --accent-primary: #2563eb;
+  --accent-primary-hover: #1d4ed8;
+  --accent-primary-dim: #eff6ff;
+  --accent-primary-border: #bfdbfe;
 
-  /* Graph & Data Visualization Accent (Cyan) */
-  --accent-cyan: #38bdf8;
-  --accent-cyan-hover: #0ea5e9;
-  --accent-cyan-dim: rgba(56, 189, 248, 0.12);
-  --accent-cyan-border: rgba(56, 189, 248, 0.28);
+  /* Graph & Data Visualization Accent (Sky Blue) */
+  --accent-cyan: #0284c7;
+  --accent-cyan-hover: #0369a1;
+  --accent-cyan-dim: #f0f9ff;
+  --accent-cyan-border: #bae6fd;
 
   /* Semantic State Colors */
-  --accent-emerald: #10b981;
-  --accent-emerald-hover: #059669;
-  --accent-emerald-dim: rgba(16, 185, 129, 0.12);
-  --accent-emerald-border: rgba(16, 185, 129, 0.28);
+  --accent-emerald: #059669;
+  --accent-emerald-hover: #047857;
+  --accent-emerald-dim: #ecfdf5;
+  --accent-emerald-border: #a7f3d0;
 
-  --accent-amber: #f59e0b;
-  --accent-amber-hover: #d97706;
-  --accent-amber-dim: rgba(245, 158, 11, 0.12);
-  --accent-amber-border: rgba(245, 158, 11, 0.28);
+  --accent-amber: #d97706;
+  --accent-amber-hover: #b45309;
+  --accent-amber-dim: #fffbeb;
+  --accent-amber-border: #fde68a;
 
-  --accent-rose: #f43f5e;
-  --accent-rose-hover: #e11d48;
-  --accent-rose-dim: rgba(244, 63, 94, 0.12);
-  --accent-rose-border: rgba(244, 63, 94, 0.28);
+  --accent-rose: #dc2626;
+  --accent-rose-hover: #b91c1c;
+  --accent-rose-dim: #fef2f2;
+  --accent-rose-border: #fecaca;
 
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
+  --accent-blue: #2563eb;
+  --accent-purple: #7c3aed;
 
   /* Security Alert Priority Badges */
-  --priority-1-bg: rgba(244, 63, 94, 0.12);
-  --priority-1-text: #fda4af;
-  --priority-1-border: rgba(244, 63, 94, 0.35);
+  --priority-1-bg: #fef2f2;
+  --priority-1-text: #dc2626;
+  --priority-1-border: #fecaca;
 
-  --priority-2-bg: rgba(245, 158, 11, 0.12);
-  --priority-2-text: #fde68a;
-  --priority-2-border: rgba(245, 158, 11, 0.35);
+  --priority-2-bg: #fffbeb;
+  --priority-2-text: #d97706;
+  --priority-2-border: #fde68a;
 
-  --priority-3-bg: rgba(56, 189, 248, 0.12);
-  --priority-3-text: #bae6fd;
-  --priority-3-border: rgba(56, 189, 248, 0.35);
+  --priority-3-bg: #f0f9ff;
+  --priority-3-text: #0284c7;
+  --priority-3-border: #bae6fd;
 
-  --priority-unknown-bg: rgba(100, 116, 139, 0.12);
-  --priority-unknown-text: #cbd5e1;
-  --priority-unknown-border: rgba(100, 116, 139, 0.3);
+  --priority-unknown-bg: #f8fafc;
+  --priority-unknown-text: #64748b;
+  --priority-unknown-border: #e2e8f0;
 
   /* Typography Stacks */
   --font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -79,8 +79,8 @@
   --radius-lg: 12px;
   --radius-full: 9999px;
 
-  /* SaaS Elevation Shadows (Subtle, No Neon Glow) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.45), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.55), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  /* Enterprise SaaS Elevation Shadows (Subtle, Crisp, No Glow) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
 }

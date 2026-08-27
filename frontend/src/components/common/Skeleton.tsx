@@ -19,7 +19,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
         height,
         width,
         borderRadius,
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        backgroundColor: '#e2e8f0',
         animation: 'pulse 1.5s ease-in-out infinite',
         ...style,
       }}

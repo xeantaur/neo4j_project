@@ -8,30 +8,30 @@ interface StatusPillProps {
 
 export const StatusPill: React.FC<StatusPillProps> = ({ label, status, detail }) => {
   let dotColor = '#64748b';
-  let textColor = '#cbd5e1';
-  let bgColor = 'rgba(255, 255, 255, 0.04)';
-  let borderColor = 'var(--border-subtle)';
+  let textColor = '#334155';
+  let bgColor = '#f8fafc';
+  let borderColor = '#e2e8f0';
 
   if (status === 'ok' || status === 'ready') {
-    dotColor = '#10b981';
-    textColor = '#6ee7b7';
-    bgColor = 'var(--accent-emerald-dim)';
-    borderColor = 'var(--accent-emerald-border)';
+    dotColor = '#059669';
+    textColor = '#065f46';
+    bgColor = '#ecfdf5';
+    borderColor = '#a7f3d0';
   } else if (status === 'degraded') {
-    dotColor = '#f59e0b';
-    textColor = '#fde68a';
-    bgColor = 'var(--accent-amber-dim)';
-    borderColor = 'var(--accent-amber-border)';
+    dotColor = '#d97706';
+    textColor = '#92400e';
+    bgColor = '#fffbeb';
+    borderColor = '#fde68a';
   } else if (status === 'error') {
-    dotColor = '#f43f5e';
-    textColor = '#fda4af';
-    bgColor = 'var(--accent-rose-dim)';
-    borderColor = 'var(--accent-rose-border)';
+    dotColor = '#dc2626';
+    textColor = '#991b1b';
+    bgColor = '#fef2f2';
+    borderColor = '#fecaca';
   } else if (status === 'loading') {
-    dotColor = '#6366f1';
-    textColor = '#c7d2fe';
-    bgColor = 'var(--accent-primary-dim)';
-    borderColor = 'var(--accent-primary-border)';
+    dotColor = '#2563eb';
+    textColor = '#1e40af';
+    bgColor = '#eff6ff';
+    borderColor = '#bfdbfe';
   }
 
   return (
@@ -39,8 +39,8 @@ export const StatusPill: React.FC<StatusPillProps> = ({ label, status, detail })
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '0.45rem',
-        padding: '0.2rem 0.65rem',
+        gap: '0.4rem',
+        padding: '0.18rem 0.55rem',
         borderRadius: 'var(--radius-full)',
         backgroundColor: bgColor,
         border: `1px solid ${borderColor}`,
@@ -58,7 +58,6 @@ export const StatusPill: React.FC<StatusPillProps> = ({ label, status, detail })
           height: '6px',
           borderRadius: '50%',
           backgroundColor: dotColor,
-          boxShadow: status === 'ok' || status === 'ready' ? '0 0 6px rgba(16, 185, 129, 0.4)' : 'none',
         }}
       />
       <span>{label}</span>

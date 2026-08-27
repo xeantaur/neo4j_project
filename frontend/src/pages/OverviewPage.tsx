@@ -244,7 +244,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {card.title}
                 </span>
-                <div style={{ padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.04)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ padding: '0.4rem', backgroundColor: '#f1f5f9', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                   {card.icon}
                 </div>
               </div>

@@ -12,7 +12,7 @@ html, body {
   background-color: var(--bg-app);
   color: var(--text-primary);
   font-family: var(--font-family-sans);
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.5;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
@@ -33,10 +33,10 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-h1 { font-size: 1.4rem; }
-h2 { font-size: 1.2rem; }
-h3 { font-size: 1.05rem; }
-h4 { font-size: 0.9rem; }
+h1 { font-size: 1.35rem; }
+h2 { font-size: 1.18rem; }
+h3 { font-size: 1.02rem; }
+h4 { font-size: 0.88rem; }
 
 p {
   color: var(--text-secondary);
@@ -62,11 +62,11 @@ code, pre, .font-mono {
   background: var(--bg-app);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: #cbd5e1;
   border-radius: var(--radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: #94a3b8;
 }
 
 /* Form Elements */
@@ -80,15 +80,15 @@ input, select, textarea {
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 0.45rem 0.75rem;
+  padding: 0.42rem 0.7rem;
   color: var(--text-primary);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px var(--accent-primary-dim);
+  box-shadow: 0 0 0 2.5px var(--accent-primary-dim);
   outline: none;
 }
 
@@ -107,7 +107,7 @@ button {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.5;
 }
 
 /* Buttons */
@@ -115,8 +115,8 @@ button:disabled {
   background-color: var(--accent-primary);
   color: #ffffff;
   font-weight: 500;
-  padding: 0.45rem 0.95rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.42rem 0.9rem;
+  border: 1px solid var(--accent-primary);
   box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
@@ -125,14 +125,14 @@ button:disabled {
 }
 .btn-primary:hover:not(:disabled) {
   background-color: var(--accent-primary-hover);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--accent-primary-hover);
 }
 
 .btn-secondary {
-  background-color: var(--bg-card);
+  background-color: #ffffff;
   border: 1px solid var(--border-card);
   color: var(--text-primary);
-  padding: 0.45rem 0.9rem;
+  padding: 0.42rem 0.85rem;
   box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
@@ -142,16 +142,16 @@ button:disabled {
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--bg-card-hover);
   border-color: var(--border-hover);
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
-  padding: 0.4rem 0.75rem;
+  padding: 0.38rem 0.7rem;
 }
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--text-primary);
 }
 
@@ -162,7 +162,7 @@ button:disabled {
   border-radius: var(--radius-md);
   padding: 1.25rem;
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .card:hover {
@@ -185,21 +185,21 @@ table {
 }
 
 th {
-  background-color: var(--bg-surface);
+  background-color: #f8fafc;
   border-bottom: 1px solid var(--border-card);
-  padding: 0.7rem 1rem;
-  font-size: 0.75rem;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
 }
 
 td {
-  padding: 0.7rem 1rem;
+  padding: 0.68rem 0.95rem;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
-  font-size: 0.825rem;
+  font-size: 0.81rem;
 }
 
 tr:last-child td {
@@ -211,18 +211,18 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.025);
+  background-color: #f8fafc;
 }
 
 /* Informational & Warning Banners */
 .info-banner {
-  background-color: rgba(99, 102, 241, 0.06);
+  background-color: var(--accent-primary-dim);
   border: 1px solid var(--accent-primary-border);
   border-left: 3px solid var(--accent-primary);
-  padding: 0.7rem 1rem;
+  padding: 0.65rem 0.95rem;
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.825rem;
+  color: #1e3a8a;
+  font-size: 0.81rem;
   line-height: 1.45;
   display: flex;
   align-items: center;
@@ -230,13 +230,13 @@ tbody tr:hover {
 }
 
 .warning-banner {
-  background-color: rgba(245, 158, 11, 0.06);
+  background-color: var(--accent-amber-dim);
   border: 1px solid var(--accent-amber-border);
   border-left: 3px solid var(--accent-amber);
-  padding: 0.7rem 1rem;
+  padding: 0.65rem 0.95rem;
   border-radius: var(--radius-sm);
-  color: #fde68a;
-  font-size: 0.825rem;
+  color: #78350f;
+  font-size: 0.81rem;
   line-height: 1.45;
 }
 

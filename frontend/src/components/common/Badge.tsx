@@ -61,30 +61,30 @@ interface TagProps {
 }
 
 export const Tag: React.FC<TagProps> = ({ label, variant = 'slate' }) => {
-  let bg = 'rgba(255, 255, 255, 0.05)';
-  let color = 'var(--text-secondary)';
-  let border = 'var(--border-subtle)';
+  let bg = '#f1f5f9';
+  let color = '#334155';
+  let border = '#e2e8f0';
 
   if (variant === 'cyan') {
-    bg = 'var(--accent-cyan-dim)';
-    color = '#7dd3fc';
-    border = 'var(--accent-cyan-border)';
+    bg = '#f0f9ff';
+    color = '#0369a1';
+    border = '#bae6fd';
   } else if (variant === 'amber') {
-    bg = 'var(--accent-amber-dim)';
-    color = '#fde68a';
-    border = 'var(--accent-amber-border)';
+    bg = '#fffbeb';
+    color = '#b45309';
+    border = '#fde68a';
   } else if (variant === 'emerald') {
-    bg = 'var(--accent-emerald-dim)';
-    color = '#6ee7b7';
-    border = 'var(--accent-emerald-border)';
+    bg = '#ecfdf5';
+    color = '#047857';
+    border = '#a7f3d0';
   } else if (variant === 'indigo') {
-    bg = 'var(--accent-primary-dim)';
-    color = '#a5b4fc';
-    border = 'var(--accent-primary-border)';
+    bg = '#eff6ff';
+    color = '#1d4ed8';
+    border = '#bfdbfe';
   } else if (variant === 'rose') {
-    bg = 'var(--accent-rose-dim)';
-    color = '#fda4af';
-    border = 'var(--accent-rose-border)';
+    bg = '#fef2f2';
+    color = '#b91c1c';
+    border = '#fecaca';
   }
 
   return (

@@ -66,7 +66,7 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
       <div className="info-banner">
         <span>ℹ</span>
         <div>
-          <strong>Reachability Notice:</strong> Calculated paths trace directional <code className="font-mono" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)', padding: '0.1rem 0.35rem', borderRadius: 'var(--radius-sm)' }}>COMMUNICATED_TO</code> relationships in the graph. This reflects observed communication flows in captured traffic rather than real-time packet routing or traceroute paths.
+          <strong>Reachability Notice:</strong> Calculated paths trace directional <code className="font-mono" style={{ backgroundColor: '#dbeafe', color: '#1e40af', padding: '0.1rem 0.35rem', borderRadius: 'var(--radius-sm)' }}>COMMUNICATED_TO</code> relationships in the graph. This reflects observed communication flows in captured traffic rather than real-time packet routing or traceroute paths.
         </div>
       </div>
 
@@ -132,7 +132,7 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="warning-banner" style={{ borderLeftColor: 'var(--accent-rose)', color: '#fda4af' }}>
+        <div className="warning-banner" style={{ borderLeftColor: 'var(--accent-rose)', color: 'var(--accent-rose)' }}>
           <strong>Path Query Result:</strong>
           <div style={{ marginTop: '0.25rem' }}>{error}</div>
         </div>
