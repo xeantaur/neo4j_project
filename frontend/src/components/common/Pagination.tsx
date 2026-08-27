@@ -26,38 +26,38 @@ export const Pagination: React.FC<PaginationProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.75rem 0',
-        fontSize: '0.85rem',
+        padding: '0.6rem 0.2rem',
+        fontSize: '0.8rem',
         color: 'var(--text-secondary)',
         flexWrap: 'wrap',
         gap: '0.5rem',
       }}
     >
       <div>
-        Showing <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{startItem}</span> to{' '}
-        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{endItem}</span> of{' '}
-        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{total}</span> {itemLabel}
+        Showing <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-family-mono)' }}>{startItem}</span> to{' '}
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-family-mono)' }}>{endItem}</span> of{' '}
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-family-mono)' }}>{total}</span> {itemLabel}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
         <button
           className="btn-secondary"
           disabled={offset <= 0}
           onClick={() => onPageChange(Math.max(0, offset - limit))}
-          style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
+          style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
         >
           Previous
         </button>
 
-        <span>
-          Page {currentPage} of {totalPages}
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          Page <strong style={{ color: 'var(--text-primary)' }}>{currentPage}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{totalPages}</strong>
         </span>
 
         <button
           className="btn-secondary"
           disabled={offset + limit >= total}
           onClick={() => onPageChange(offset + limit)}
-          style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
+          style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
         >
           Next
         </button>

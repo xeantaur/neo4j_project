@@ -1,5 +1,4 @@
 import React from 'react';
-import { Shield, Network, AlertTriangle, GitCompare, Route, Activity, Upload } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 
 export type ActiveView = 'overview' | 'network' | 'alerts' | 'correlations' | 'path' | 'import';
@@ -19,86 +18,87 @@ export const Header: React.FC<HeaderProps> = ({
   dbStatus,
   onRetryHealth,
 }) => {
-  const navItems: { id: ActiveView; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'Overview', icon: <Activity size={16} /> },
-    { id: 'network', label: 'Network Explorer', icon: <Network size={16} /> },
-    { id: 'alerts', label: 'Alert Explorer', icon: <AlertTriangle size={16} /> },
-    { id: 'correlations', label: 'Correlations', icon: <GitCompare size={16} /> },
-    { id: 'path', label: 'Path Finder', icon: <Route size={16} /> },
-    { id: 'import', label: 'Import Data', icon: <Upload size={16} /> },
+  const navItems: { id: ActiveView; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'network', label: 'Network Explorer' },
+    { id: 'alerts', label: 'Alert Explorer' },
+    { id: 'correlations', label: 'Correlations' },
+    { id: 'path', label: 'Path Finder' },
+    { id: 'import', label: 'Import Data' },
   ];
 
   return (
     <header
       style={{
-        backgroundColor: 'var(--bg-card)',
-        borderBottom: '1px solid var(--border-subtle)',
+        backgroundColor: '#171a1f',
+        borderBottom: '1px solid #0f1115',
         position: 'sticky',
         top: 0,
         zIndex: 100,
       }}
     >
+      {/* Top Application Bar */}
       <div
         style={{
-          maxWidth: '1600px',
+          maxWidth: '1440px',
           margin: '0 auto',
-          padding: '0 1.25rem',
+          padding: '0 2rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: '56px',
+          height: '46px',
         }}
       >
-        {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div
+        {/* Text-Only Product Identity */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <h1 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f9fafb', letterSpacing: '-0.01em' }}>
+            Network Traffic & Security Graph
+          </h1>
+          <span
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px',
+              fontSize: '0.72rem',
+              fontWeight: 500,
+              padding: '0.1rem 0.4rem',
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--accent-cyan-dim)',
-              color: 'var(--accent-cyan)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              color: '#9ca3af',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              fontFamily: 'var(--font-family-mono)',
             }}
           >
-            <Shield size={18} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
-              Network Traffic & Security Graph
-            </h1>
-          </div>
+            v1.2.1
+          </span>
         </div>
 
-        {/* System Health / Readiness Pills */}
+        {/* Understated Status Indicators */}
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }}
           onClick={onRetryHealth}
           title="Click to re-verify connectivity"
         >
           <StatusPill
             label={apiStatus === 'ok' ? 'API Liveness' : apiStatus === 'loading' ? 'API Checking...' : 'API Offline'}
             status={apiStatus}
+            onDark
           />
           <StatusPill
             label={dbStatus === 'ready' ? 'Neo4j Connected' : dbStatus === 'loading' ? 'Neo4j Checking...' : 'Neo4j 503'}
             status={dbStatus}
+            onDark
           />
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Navigation Bar */}
       <div
         style={{
-          maxWidth: '1600px',
+          maxWidth: '1440px',
           margin: '0 auto',
-          padding: '0 1.25rem',
+          padding: '0 2rem',
           display: 'flex',
-          gap: '0.25rem',
-          borderTop: '1px solid var(--border-subtle)',
+          gap: '1.5rem',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#171a1f',
           overflowX: 'auto',
         }}
       >
@@ -109,21 +109,18 @@ export const Header: React.FC<HeaderProps> = ({
               key={item.id}
               onClick={() => onViewChange(item.id)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1rem',
+                padding: '0.55rem 0',
                 fontSize: '0.85rem',
                 fontWeight: isActive ? 600 : 500,
-                color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                borderBottom: isActive ? '2px solid var(--accent-cyan)' : '2px solid transparent',
+                color: isActive ? '#ffffff' : '#9ca3af',
+                backgroundColor: 'transparent',
+                borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
                 borderRadius: 0,
                 whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease',
+                transition: 'color 0.12s ease',
               }}
             >
-              {item.icon}
-              <span>{item.label}</span>
+              {item.label}
             </button>
           );
         })}

@@ -11,7 +11,7 @@ export const Layer2DetailPanel: React.FC<Layer2DetailPanelProps> = ({ identifier
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Observed Layer 2 Identifier
         </span>
-        <div style={{ fontSize: '1.15rem', fontWeight: 600, fontFamily: 'var(--font-family-mono)', color: '#cbd5e1', wordBreak: 'break-all' }}>
+        <div style={{ fontSize: '1.15rem', fontWeight: 600, fontFamily: 'var(--font-family-mono)', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
           {identifier}
         </div>
       </div>

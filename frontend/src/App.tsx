@@ -81,19 +81,20 @@ export const App: React.FC = () => {
         <div
           className="warning-banner"
           style={{
-            margin: '0.75rem 1.25rem 0',
+            margin: '0.85rem 1.5rem 0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: '1rem',
           }}
         >
           <div>
-            ⚠️ <strong>Neo4j Database Unavailable (HTTP 503):</strong> The FastAPI backend is running, but the Neo4j instance is unreachable or unconfigured. Queries will fail until Neo4j is available.
+            <strong>Neo4j Database Unavailable (HTTP 503):</strong> The FastAPI backend is running, but the Neo4j instance is unreachable or unconfigured. Queries will fail until Neo4j is available.
           </div>
           <button
             className="btn-secondary"
             onClick={checkHealth}
-            style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+            style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', flexShrink: 0 }}
           >
             Retry Connection
           </button>
@@ -125,33 +126,6 @@ export const App: React.FC = () => {
           />
         )}
       </main>
-
-      {/* Footer */}
-      <footer
-        style={{
-          padding: '1rem 1.25rem',
-          borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-card)',
-          color: 'var(--text-muted)',
-          fontSize: '0.75rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '0.5rem',
-        }}
-      >
-        <div>
-          <span>Network Traffic & Security Alert Analysis</span> — Modernized Portfolio Project
-        </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <span>Neo4j 5.x Graph Model</span>
-          <span>•</span>
-          <span>FastAPI Backend</span>
-          <span>•</span>
-          <span>React + Cytoscape.js Frontend</span>
-        </div>
-      </footer>
     </div>
   );
 };

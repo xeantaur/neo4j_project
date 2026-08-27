@@ -117,16 +117,16 @@ export const IPDetailPanel: React.FC<IPDetailPanelProps> = ({
             label={(detail.traffic_metrics_mode || 'none').toUpperCase()}
             variant={
               detail.traffic_metrics_mode === 'enriched'
-                ? 'emerald'
+                ? 'indigo'
                 : detail.traffic_metrics_mode === 'mixed'
                 ? 'amber'
                 : detail.traffic_metrics_mode === 'basic'
-                ? 'cyan'
+                ? 'slate'
                 : 'slate'
             }
           />
         </div>
-        <div style={{ fontSize: '1.2rem', fontWeight: 600, fontFamily: 'var(--font-family-mono)', color: 'var(--accent-cyan)', marginTop: '0.2rem' }}>
+        <div style={{ fontSize: '1.2rem', fontWeight: 600, fontFamily: 'var(--font-family-mono)', color: 'var(--text-primary)', marginTop: '0.2rem' }}>
           {detail.address}
         </div>
       </div>
@@ -182,19 +182,19 @@ export const IPDetailPanel: React.FC<IPDetailPanelProps> = ({
           </div>
           <div className="card" style={{ padding: '0.6rem' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Outbound Peers</div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
               {detail.distinct_outbound_peers ?? 0}
             </div>
           </div>
           <div className="card" style={{ padding: '0.6rem' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Inbound Peers</div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--accent-amber)', fontFamily: 'var(--font-family-mono)' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
               {detail.distinct_inbound_peers ?? 0}
             </div>
           </div>
           <div className="card" style={{ padding: '0.6rem' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Distinct Dst Ports</div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--accent-emerald)', fontFamily: 'var(--font-family-mono)' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
               {detail.distinct_destination_ports ?? 0}
             </div>
           </div>
@@ -226,7 +226,7 @@ export const IPDetailPanel: React.FC<IPDetailPanelProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
             <div className="card" style={{ padding: '0.6rem' }}>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Bytes Sent</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--accent-cyan)', fontFamily: 'var(--font-family-mono)' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family-mono)' }}>
                 {formatObservedBytes(detail.observed_bytes_sent)}
               </div>
             </div>
@@ -358,7 +358,7 @@ export const IPDetailPanel: React.FC<IPDetailPanelProps> = ({
                   <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.2rem' }}>
                     <Tag
                       label={peer.direction}
-                      variant={peer.direction === 'outbound' ? 'cyan' : 'amber'}
+                      variant="slate"
                     />
                     {peer.protocols.map((p) => (
                       <Tag key={p} label={p} variant="slate" />

@@ -106,25 +106,30 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
   };
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Title */}
       <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 600 }}>Security Alert Fact Explorer</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+        <h2 style={{ fontSize: '1.45rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+          Security Alert Fact Explorer
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.25rem' }}>
           Filter and inspect unique normalized security alert facts.
         </p>
       </div>
 
       {/* Semantic Notice */}
       <div className="info-banner">
-        ℹ <strong>AlertFact Semantic Note:</strong> Alert facts represent unique normalized security alert facts, not timestamped event occurrences. Identical occurrences with identical fields collapse into a single record.
+        <span>ℹ</span>
+        <div>
+          <strong>AlertFact Semantic Note:</strong> Alert facts represent unique normalized security alert facts, not timestamped event occurrences. Identical occurrences with identical fields collapse into a single record.
+        </div>
       </div>
 
       {/* Filter Toolbar */}
-      <form onSubmit={handleFilterSubmit} className="card" style={{ padding: '1rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', alignItems: 'flex-end' }}>
+      <form onSubmit={handleFilterSubmit} className="card" style={{ padding: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem', alignItems: 'flex-end' }}>
           <div>
-            <label htmlFor="filter-source" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+            <label htmlFor="filter-source" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Source IP
             </label>
             <input
@@ -133,12 +138,12 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
               value={sourceIp}
               onChange={(e) => setSourceIp(e.target.value)}
               placeholder="e.g. 192.168.1.100"
-              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem' }}
+              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
             />
           </div>
 
           <div>
-            <label htmlFor="filter-target" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+            <label htmlFor="filter-target" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Target IP
             </label>
             <input
@@ -147,19 +152,19 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
               value={targetIp}
               onChange={(e) => setTargetIp(e.target.value)}
               placeholder="e.g. 192.168.1.1"
-              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem' }}
+              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
             />
           </div>
 
           <div>
-            <label htmlFor="filter-priority" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+            <label htmlFor="filter-priority" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Priority
             </label>
             <select
               id="filter-priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              style={{ width: '100%', fontSize: '0.8rem' }}
+              style={{ width: '100%', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
             >
               <option value="">All Priorities</option>
               <option value="1">Priority 1</option>
@@ -170,7 +175,7 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
           </div>
 
           <div>
-            <label htmlFor="filter-sid" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+            <label htmlFor="filter-sid" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Signature ID (SID)
             </label>
             <input
@@ -179,12 +184,12 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
               value={sid}
               onChange={(e) => setSid(e.target.value)}
               placeholder="e.g. 2001219"
-              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem' }}
+              style={{ width: '100%', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
             />
           </div>
 
           <div>
-            <label htmlFor="filter-proto" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+            <label htmlFor="filter-proto" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Protocol
             </label>
             <input
@@ -193,15 +198,15 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
               value={protocol}
               onChange={(e) => setProtocol(e.target.value)}
               placeholder="e.g. TCP, UDP"
-              style={{ width: '100%', fontSize: '0.8rem' }}
+              style={{ width: '100%', fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
             />
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button type="submit" className="btn-primary" style={{ flex: 1, fontSize: '0.8rem' }}>
+            <button type="submit" className="btn-primary" style={{ flex: 1, fontSize: '0.8rem', padding: '0.38rem 0.75rem' }}>
               Filter
             </button>
-            <button type="button" className="btn-secondary" onClick={handleClearFilters} style={{ fontSize: '0.8rem' }}>
+            <button type="button" className="btn-secondary" onClick={handleClearFilters} style={{ fontSize: '0.8rem', padding: '0.38rem 0.75rem' }}>
               Clear
             </button>
           </div>
@@ -219,7 +224,7 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
         <table>
           <thead>
             <tr>
-              <th style={{ width: '100px' }}>Priority</th>
+              <th style={{ width: '110px' }}>Priority</th>
               <th style={{ width: '110px' }}>SID</th>
               <th>Alert Message</th>
               <th>Source IP</th>
@@ -264,12 +269,12 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
                     {fact.message || '—'}
                   </td>
                   <td>
-                    <span className="font-mono" style={{ color: 'var(--accent-cyan)' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {fact.source_ip}
                     </span>
                   </td>
                   <td>
-                    <span className="font-mono" style={{ color: 'var(--accent-amber)' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {fact.target_ip}
                     </span>
                   </td>
@@ -386,16 +391,16 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Source IP : Port</div>
-                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--accent-cyan)', fontWeight: 600 }}>
+                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                     {selectedFact.source_ip} : {selectedFact.src_port !== null ? selectedFact.src_port : '*'}
                   </div>
                 </div>
 
-                <div style={{ fontSize: '1.25rem', color: 'var(--text-muted)' }}>➔</div>
+                <div style={{ fontSize: '1.25rem', color: 'var(--text-muted)' }}>→</div>
 
                 <div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target IP : Port</div>
-                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--accent-amber)', fontWeight: 600 }}>
+                  <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                     {selectedFact.target_ip} : {selectedFact.dst_port !== null ? selectedFact.dst_port : '*'}
                   </div>
                 </div>

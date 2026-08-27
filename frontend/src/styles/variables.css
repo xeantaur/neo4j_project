@@ -1,71 +1,89 @@
 :root {
-  /* Background colors */
-  --bg-app: #0b0f17;
-  --bg-card: #111827;
-  --bg-card-hover: #162032;
-  --bg-sidebar: #0e1524;
-  --bg-input: #1a2332;
-  --bg-canvas: #090d14;
-  --bg-modal-backdrop: rgba(3, 7, 18, 0.8);
+  /* Application Surfaces & Backgrounds */
+  --bg-header: #171a1f;
+  --bg-app: #f2f3f5;
+  --bg-surface: #ffffff;
+  --bg-surface-secondary: #f7f8fa;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f9fafb;
+  --bg-sidebar: #ffffff;
+  --bg-input: #ffffff;
+  --bg-canvas: #f2f3f5;
+  --bg-modal-backdrop: rgba(17, 24, 39, 0.5);
 
-  /* Border colors */
-  --border-subtle: #1e293b;
-  --border-card: #273549;
-  --border-focus: #38bdf8;
+  /* Subtle Neutral Gray Borders */
+  --border-subtle: #d9dde3;
+  --border-card: #d9dde3;
+  --border-hover: #c4c9d1;
+  --border-focus: #2563eb;
 
-  /* Text colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-inverse: #0b0f17;
+  /* Typography & Contrast Hierarchy */
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-subtle: #9ca3af;
+  --text-inverse: #ffffff;
 
-  /* Semantic accent colors */
-  --accent-cyan: #38bdf8;
-  --accent-cyan-hover: #0ea5e9;
-  --accent-cyan-dim: rgba(56, 189, 248, 0.15);
+  /* Primary Product Accent (Restrained Cobalt Blue) */
+  --accent-primary: #2563eb;
+  --accent-primary-hover: #1d4ed8;
+  --accent-primary-dim: #eff6ff;
+  --accent-primary-border: #bfdbfe;
 
-  --accent-blue: #3b82f6;
-  --accent-amber: #f59e0b;
-  --accent-amber-dim: rgba(245, 158, 11, 0.15);
+  /* Data & Network Links Accent */
+  --accent-cyan: #2563eb;
+  --accent-cyan-hover: #1d4ed8;
+  --accent-cyan-dim: #eff6ff;
+  --accent-cyan-border: #bfdbfe;
 
-  --accent-emerald: #10b981;
-  --accent-emerald-dim: rgba(16, 185, 129, 0.15);
+  /* Semantic State Colors (Strict Functional Use) */
+  --accent-emerald: #059669;
+  --accent-emerald-hover: #047857;
+  --accent-emerald-dim: #ecfdf5;
+  --accent-emerald-border: #a7f3d0;
 
-  --accent-rose: #f43f5e;
-  --accent-rose-dim: rgba(244, 63, 94, 0.15);
+  --accent-amber: #d97706;
+  --accent-amber-hover: #b45309;
+  --accent-amber-dim: #fffbeb;
+  --accent-amber-border: #fde68a;
 
-  --accent-purple: #a855f7;
+  --accent-rose: #dc2626;
+  --accent-rose-hover: #b91c1c;
+  --accent-rose-dim: #fef2f2;
+  --accent-rose-border: #fecaca;
 
-  /* Priority badges */
-  --priority-1-bg: rgba(244, 63, 94, 0.2);
-  --priority-1-text: #fda4af;
-  --priority-1-border: #f43f5e;
+  --accent-blue: #2563eb;
+  --accent-purple: #6d28d9;
 
-  --priority-2-bg: rgba(245, 158, 11, 0.2);
-  --priority-2-text: #fde68a;
-  --priority-2-border: #f59e0b;
+  /* Security Alert Priority Badges */
+  --priority-1-bg: #fef2f2;
+  --priority-1-text: #dc2626;
+  --priority-1-border: #fecaca;
 
-  --priority-3-bg: rgba(56, 189, 248, 0.2);
-  --priority-3-text: #bae6fd;
-  --priority-3-border: #38bdf8;
+  --priority-2-bg: #fffbeb;
+  --priority-2-text: #d97706;
+  --priority-2-border: #fde68a;
 
-  --priority-unknown-bg: rgba(100, 116, 139, 0.2);
-  --priority-unknown-text: #cbd5e1;
-  --priority-unknown-border: #64748b;
+  --priority-3-bg: #eff6ff;
+  --priority-3-text: #2563eb;
+  --priority-3-border: #bfdbfe;
 
-  /* Typography */
-  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --priority-unknown-bg: #f3f4f6;
+  --priority-unknown-text: #6b7280;
+  --priority-unknown-border: #d9dde3;
 
-  /* Radii */
-  --radius-sm: 4px;
+  /* Typography Stacks */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Border Radii */
+  --radius-sm: 6px;
   --radius-md: 6px;
-  --radius-lg: 10px;
+  --radius-lg: 8px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 15px rgba(56, 189, 248, 0.3);
+  /* Subtle Crisp Elevation Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
 }

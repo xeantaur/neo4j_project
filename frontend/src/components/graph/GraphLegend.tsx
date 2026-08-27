@@ -6,13 +6,14 @@ export const GraphLegend: React.FC = () => {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '1.25rem',
-        padding: '0.5rem 0.75rem',
-        backgroundColor: 'rgba(17, 24, 39, 0.85)',
-        backdropFilter: 'blur(4px)',
+        gap: '1.1rem',
+        padding: '0.4rem 0.8rem',
+        backgroundColor: 'rgba(255, 255, 255, 0.94)',
+        backdropFilter: 'blur(8px)',
         borderRadius: 'var(--radius-sm)',
-        border: '1px solid var(--border-subtle)',
-        fontSize: '0.75rem',
+        border: '1px solid var(--border-card)',
+        boxShadow: 'var(--shadow-sm)',
+        fontSize: '0.72rem',
         color: 'var(--text-secondary)',
         flexWrap: 'wrap',
       }}
@@ -24,8 +25,8 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '12px',
             height: '10px',
-            backgroundColor: '#111827',
-            border: '1.5px solid #38bdf8',
+            backgroundColor: '#ffffff',
+            border: '1.5px solid #94a3b8',
             borderRadius: '2px',
           }}
         />
@@ -39,12 +40,12 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '12px',
             height: '10px',
-            backgroundColor: '#111827',
-            border: '2px solid #f59e0b',
+            backgroundColor: '#eff6ff',
+            border: '1.5px solid #2563eb',
             borderRadius: '2px',
           }}
         />
-        <span>Center IP</span>
+        <span style={{ color: '#1e40af', fontWeight: 600 }}>Center IP</span>
       </div>
 
       {/* Layer 2 Identifier */}
@@ -54,7 +55,7 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '14px',
             height: '8px',
-            backgroundColor: '#1e293b',
+            backgroundColor: '#f3f4f6',
             border: '1.5px solid #94a3b8',
             borderRadius: '9999px',
           }}
@@ -69,7 +70,7 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '18px',
             height: '2px',
-            backgroundColor: '#0284c7',
+            backgroundColor: '#64748b',
             position: 'relative',
           }}
         >
@@ -82,11 +83,11 @@ export const GraphLegend: React.FC = () => {
               height: 0,
               borderTop: '4px solid transparent',
               borderBottom: '4px solid transparent',
-              borderLeft: '5px solid #0284c7',
+              borderLeft: '5px solid #64748b',
             }}
           />
         </span>
-        <span>COMMUNICATED_TO</span>
+        <span className="font-mono" style={{ fontSize: '0.7rem' }}>COMMUNICATED_TO</span>
       </div>
 
       {/* OBSERVED_WITH */}
@@ -96,10 +97,10 @@ export const GraphLegend: React.FC = () => {
             display: 'inline-block',
             width: '18px',
             height: '0',
-            borderTop: '2px dashed #64748b',
+            borderTop: '2px dashed #cbd5e1',
           }}
         />
-        <span>OBSERVED_WITH</span>
+        <span className="font-mono" style={{ fontSize: '0.7rem' }}>OBSERVED_WITH</span>
       </div>
     </div>
   );

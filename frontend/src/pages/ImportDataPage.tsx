@@ -411,21 +411,23 @@ export const ImportDataPage: React.FC<ImportDataPageProps> = ({ onNavigate, onIm
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Header */}
       <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 600 }}>Import Data</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+        <h2 style={{ fontSize: '1.45rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+          Import Data
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.25rem' }}>
           Load network traffic and/or IDS security alert data directly into the active analysis workspace.
         </p>
       </div>
 
       {/* Info notice */}
-      <div className="info-banner" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div className="info-banner" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
         <Info size={16} style={{ flexShrink: 0 }} />
-        <span>
-          Provide at least one supported data file. Supported formats: tshark tab-separated TSV traffic exports and IDS/Snort JSON alert arrays. Max file size: {statusConfig.max_file_size_mb} MiB per file.
-        </span>
+        <div>
+          Provide at least one supported data file. Supported formats: tshark tab-separated TSV traffic exports and IDS/Snort JSON alert arrays. Max file size: <strong>{statusConfig.max_file_size_mb} MiB</strong> per file.
+        </div>
       </div>
 
       {/* Source Selection Cards */}
@@ -434,7 +436,7 @@ export const ImportDataPage: React.FC<ImportDataPageProps> = ({ onNavigate, onIm
         <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-              <Network size={18} color="var(--accent-cyan)" />
+              <Network size={18} color="var(--accent-primary)" />
               <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>Network Traffic</h3>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>

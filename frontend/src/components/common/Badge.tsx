@@ -37,14 +37,17 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
     <span
       className={className}
       style={{
-        display: 'inline-block',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.35rem',
         padding: '0.15rem 0.5rem',
         borderRadius: 'var(--radius-sm)',
         backgroundColor: bg,
         color: color,
         border: `1px solid ${border}`,
-        fontSize: '0.75rem',
+        fontSize: '0.72rem',
         fontWeight: 600,
+        letterSpacing: '0.02em',
       }}
     >
       {label}
@@ -54,40 +57,50 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
 
 interface TagProps {
   label: string;
-  variant?: 'cyan' | 'slate' | 'amber' | 'emerald';
+  variant?: 'cyan' | 'slate' | 'amber' | 'emerald' | 'indigo' | 'rose';
 }
 
 export const Tag: React.FC<TagProps> = ({ label, variant = 'slate' }) => {
-  let bg = 'rgba(100, 116, 139, 0.15)';
-  let color = '#cbd5e1';
-  let border = '#334155';
+  let bg = '#f1f5f9';
+  let color = '#334155';
+  let border = '#e2e8f0';
 
   if (variant === 'cyan') {
-    bg = 'rgba(56, 189, 248, 0.12)';
-    color = '#7dd3fc';
-    border = 'rgba(56, 189, 248, 0.3)';
+    bg = '#f0f9ff';
+    color = '#0369a1';
+    border = '#bae6fd';
   } else if (variant === 'amber') {
-    bg = 'rgba(245, 158, 11, 0.12)';
-    color = '#fde68a';
-    border = 'rgba(245, 158, 11, 0.3)';
+    bg = '#fffbeb';
+    color = '#b45309';
+    border = '#fde68a';
   } else if (variant === 'emerald') {
-    bg = 'rgba(16, 185, 129, 0.12)';
-    color = '#6ee7b7';
-    border = 'rgba(16, 185, 129, 0.3)';
+    bg = '#ecfdf5';
+    color = '#047857';
+    border = '#a7f3d0';
+  } else if (variant === 'indigo') {
+    bg = '#eff6ff';
+    color = '#1d4ed8';
+    border = '#bfdbfe';
+  } else if (variant === 'rose') {
+    bg = '#fef2f2';
+    color = '#b91c1c';
+    border = '#fecaca';
   }
 
   return (
     <span
       style={{
-        display: 'inline-block',
-        padding: '0.1rem 0.45rem',
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '0.12rem 0.45rem',
         borderRadius: 'var(--radius-sm)',
         backgroundColor: bg,
         color: color,
         border: `1px solid ${border}`,
-        fontSize: '0.75rem',
+        fontSize: '0.72rem',
         fontWeight: 500,
         fontFamily: 'var(--font-family-mono)',
+        lineHeight: 1.3,
       }}
     >
       {label}

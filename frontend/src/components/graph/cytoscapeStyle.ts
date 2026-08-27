@@ -5,13 +5,12 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
   {
     selector: 'node',
     style: {
-      'font-family': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-      'font-size': '11px',
+      'font-family': 'ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, monospace',
+      'font-size': '10px',
       'text-valign': 'center',
       'text-halign': 'center',
-      'color': '#f8fafc',
-      'text-outline-width': 2,
-      'text-outline-color': '#090d14',
+      'color': '#1f2937',
+      'text-outline-width': 0,
       'transition-property': 'background-color, border-color, border-width, opacity',
       'transition-duration': 150,
     },
@@ -22,13 +21,14 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
     selector: 'node[type = "IPAddress"]',
     style: {
       'shape': 'round-rectangle',
-      'background-color': '#111827',
-      'border-color': '#38bdf8',
-      'border-width': 2,
+      'background-color': '#ffffff',
+      'border-color': '#94a3b8',
+      'border-width': 1.5,
       'width': 'label',
-      'height': 34,
-      'padding': '8px',
+      'height': 28,
+      'padding': '6px',
       'content': 'data(label)',
+      'color': '#1f2937',
     },
   },
 
@@ -36,12 +36,11 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
   {
     selector: 'node[?isCenter]',
     style: {
-      'border-color': '#f59e0b',
-      'border-width': 3,
-      'underlay-color': '#f59e0b',
-      'underlay-padding': '4px',
-      'underlay-opacity': 0.2,
+      'background-color': '#eff6ff',
+      'border-color': '#2563eb',
+      'border-width': 2,
       'font-weight': 'bold',
+      'color': '#1e40af',
     },
   },
 
@@ -50,14 +49,14 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
     selector: 'node[type = "Layer2Identifier"]',
     style: {
       'shape': 'ellipse',
-      'background-color': '#1e293b',
+      'background-color': '#f3f4f6',
       'border-color': '#94a3b8',
       'border-width': 1.5,
       'width': 'label',
-      'height': 30,
-      'padding': '6px',
+      'height': 24,
+      'padding': '5px',
       'content': 'data(label)',
-      'color': '#cbd5e1',
+      'color': '#4b5563',
     },
   },
 
@@ -65,17 +64,18 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
   {
     selector: 'edge',
     style: {
-      'width': 2,
+      'width': 1.5,
       'curve-style': 'bezier',
-      'font-size': '9px',
-      'color': '#cbd5e1',
-      'text-background-color': '#090d14',
-      'text-background-opacity': 1.0,
-      'text-background-padding': '3px',
+      'font-family': 'ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, monospace',
+      'font-size': '8.5px',
+      'color': '#4b5563',
+      'text-background-color': '#ffffff',
+      'text-background-opacity': 0.95,
+      'text-background-padding': '2px',
       'text-background-shape': 'roundrectangle',
-      'text-border-color': '#334155',
+      'text-border-color': '#e5e7eb',
       'text-border-width': 1,
-      'text-border-opacity': 0.6,
+      'text-border-opacity': 0.9,
       'text-rotation': 'autorotate',
       'transition-property': 'line-color, target-arrow-color, opacity, width',
       'transition-duration': 150,
@@ -86,8 +86,8 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
   {
     selector: 'edge[type = "COMMUNICATED_TO"]',
     style: {
-      'line-color': '#0284c7',
-      'target-arrow-color': '#0284c7',
+      'line-color': '#64748b',
+      'target-arrow-color': '#64748b',
       'target-arrow-shape': 'triangle',
       'line-style': 'solid',
       'content': 'data(label)',
@@ -98,7 +98,7 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
   {
     selector: 'edge[type = "OBSERVED_WITH"]',
     style: {
-      'line-color': '#475569',
+      'line-color': '#cbd5e1',
       'line-style': 'dashed',
       'line-dash-pattern': [4, 3],
       'target-arrow-shape': 'none',
@@ -110,19 +110,19 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
   {
     selector: 'node:selected',
     style: {
-      'border-color': '#ec4899',
-      'border-width': 3,
-      'underlay-color': '#ec4899',
-      'underlay-padding': '4px',
-      'underlay-opacity': 0.25,
+      'border-color': '#2563eb',
+      'border-width': 2.5,
+      'underlay-color': '#2563eb',
+      'underlay-padding': '3px',
+      'underlay-opacity': 0.12,
     },
   },
   {
     selector: 'edge:selected',
     style: {
-      'line-color': '#ec4899',
-      'target-arrow-color': '#ec4899',
-      'width': 3,
+      'line-color': '#2563eb',
+      'target-arrow-color': '#2563eb',
+      'width': 2,
     },
   },
 
@@ -130,7 +130,7 @@ export const cytoscapeStylesheet: StylesheetStyle[] = [
   {
     selector: '.dimmed',
     style: {
-      'opacity': 0.15,
+      'opacity': 0.2,
     },
   },
   {
