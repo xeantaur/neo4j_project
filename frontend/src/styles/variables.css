@@ -1,18 +1,20 @@
 :root {
-  /* Application Surfaces & Backgrounds (Soft Neutral Enterprise) */
-  --bg-app: #f3f4f6;
-  --bg-surface: #fafafa;
+  /* Application Surfaces & Backgrounds */
+  --bg-header: #171a1f;
+  --bg-app: #f2f3f5;
+  --bg-surface: #ffffff;
+  --bg-surface-secondary: #f7f8fa;
   --bg-card: #ffffff;
   --bg-card-hover: #f9fafb;
   --bg-sidebar: #ffffff;
   --bg-input: #ffffff;
-  --bg-canvas: #f3f4f6;
+  --bg-canvas: #f2f3f5;
   --bg-modal-backdrop: rgba(17, 24, 39, 0.5);
 
   /* Subtle Neutral Gray Borders */
-  --border-subtle: #e5e7eb;
-  --border-card: #e5e7eb;
-  --border-hover: #d1d5db;
+  --border-subtle: #d9dde3;
+  --border-card: #d9dde3;
+  --border-hover: #c4c9d1;
   --border-focus: #2563eb;
 
   /* Typography & Contrast Hierarchy */
@@ -22,13 +24,13 @@
   --text-subtle: #9ca3af;
   --text-inverse: #ffffff;
 
-  /* Primary Product Accent (Restrained Blue) */
+  /* Primary Product Accent (Restrained Cobalt Blue) */
   --accent-primary: #2563eb;
   --accent-primary-hover: #1d4ed8;
   --accent-primary-dim: #eff6ff;
   --accent-primary-border: #bfdbfe;
 
-  /* Data & Network Links Accent (Muted Blue) */
+  /* Data & Network Links Accent */
   --accent-cyan: #2563eb;
   --accent-cyan-hover: #1d4ed8;
   --accent-cyan-dim: #eff6ff;
@@ -68,7 +70,7 @@
 
   --priority-unknown-bg: #f3f4f6;
   --priority-unknown-text: #6b7280;
-  --priority-unknown-border: #e5e7eb;
+  --priority-unknown-border: #d9dde3;
 
   /* Typography Stacks */
   --font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

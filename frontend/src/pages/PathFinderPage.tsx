@@ -53,12 +53,12 @@ export const PathFinderPage: React.FC<PathFinderPageProps> = ({
   };
 
   return (
-    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <div>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+        <h2 style={{ fontSize: '1.45rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
           Communication Path Finder
         </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.25rem' }}>
           Discover the shortest directional Layer 3 communication path connecting two observed endpoints.
         </p>
       </div>

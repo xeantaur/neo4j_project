@@ -4,6 +4,7 @@ import {
   formatObservedPackets,
   formatEpochSeconds,
   formatObservationWindow,
+  formatHumanDateTime,
 } from '../utils/formatters';
 
 describe('Formatters Utility', () => {
@@ -63,6 +64,18 @@ describe('Formatters Utility', () => {
       expect(formatObservationWindow(0.5)).toBe('500 ms');
       expect(formatObservationWindow(1.0)).toBe('1.00s');
       expect(formatObservationWindow(12.3456)).toBe('12.35s');
+    });
+  });
+
+  describe('formatHumanDateTime', () => {
+    it('handles null and undefined', () => {
+      expect(formatHumanDateTime(null)).toBe('—');
+      expect(formatHumanDateTime(undefined)).toBe('—');
+    });
+
+    it('formats valid epoch timestamp into readable date time UTC string', () => {
+      expect(formatHumanDateTime(0)).toBe('1970-01-01 00:00:00 UTC');
+      expect(formatHumanDateTime(1718000000)).toBe('2024-06-10 06:13:20 UTC');
     });
   });
 });

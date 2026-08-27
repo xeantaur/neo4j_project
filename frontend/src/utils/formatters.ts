@@ -54,3 +54,15 @@ export function formatObservationWindow(windowSeconds: number | null | undefined
   }
   return `${windowSeconds.toFixed(2)}s`;
 }
+
+/**
+ * Format epoch timestamp (seconds) into a clean, human-readable date & time string.
+ * Example: '2024-06-10 06:13:20 UTC'
+ */
+export function formatHumanDateTime(epochSeconds: number | null | undefined): string {
+  if (epochSeconds === null || epochSeconds === undefined || isNaN(epochSeconds)) {
+    return '—';
+  }
+  const iso = new Date(epochSeconds * 1000).toISOString();
+  return `${iso.slice(0, 10)} ${iso.slice(11, 19)} UTC`;
+}

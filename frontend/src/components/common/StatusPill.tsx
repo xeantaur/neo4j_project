@@ -4,19 +4,20 @@ interface StatusPillProps {
   label: string;
   status: 'ok' | 'ready' | 'degraded' | 'error' | 'loading';
   detail?: string;
+  onDark?: boolean;
 }
 
-export const StatusPill: React.FC<StatusPillProps> = ({ label, status, detail }) => {
+export const StatusPill: React.FC<StatusPillProps> = ({ label, status, detail, onDark = false }) => {
   let dotColor = '#9ca3af';
 
   if (status === 'ok' || status === 'ready') {
-    dotColor = '#059669';
+    dotColor = '#10b981';
   } else if (status === 'degraded') {
-    dotColor = '#d97706';
+    dotColor = '#f59e0b';
   } else if (status === 'error') {
-    dotColor = '#dc2626';
+    dotColor = '#ef4444';
   } else if (status === 'loading') {
-    dotColor = '#2563eb';
+    dotColor = '#3b82f6';
   }
 
   return (
@@ -25,9 +26,9 @@ export const StatusPill: React.FC<StatusPillProps> = ({ label, status, detail })
         display: 'inline-flex',
         alignItems: 'center',
         gap: '0.35rem',
-        fontSize: '0.75rem',
+        fontSize: '0.78rem',
         fontWeight: 500,
-        color: 'var(--text-secondary)',
+        color: onDark ? '#d1d5db' : 'var(--text-secondary)',
       }}
       title={detail || label}
     >

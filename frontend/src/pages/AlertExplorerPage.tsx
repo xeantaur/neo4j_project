@@ -106,13 +106,13 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
   };
 
   return (
-    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Title */}
       <div>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+        <h2 style={{ fontSize: '1.45rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
           Security Alert Fact Explorer
         </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.25rem' }}>
           Filter and inspect unique normalized security alert facts.
         </p>
       </div>
@@ -126,7 +126,7 @@ export const AlertExplorerPage: React.FC<AlertExplorerPageProps> = ({ onNavigate
       </div>
 
       {/* Filter Toolbar */}
-      <form onSubmit={handleFilterSubmit} className="card" style={{ padding: '1rem 1.25rem' }}>
+      <form onSubmit={handleFilterSubmit} className="card" style={{ padding: '1.25rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem', alignItems: 'flex-end' }}>
           <div>
             <label htmlFor="filter-source" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
